@@ -35,7 +35,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.13</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.14</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -75,6 +75,15 @@
     </div>
   </div>
   <p class="note">共有の形は2つあります。通常は <b>?game=ゲームのURL</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
+
+  <h2>共通部品はプレイヤー側が持ちます</h2>
+  <p class="note">フォントやアイコン、共通のJavaScriptは、カートリッジには入れず、<b>プレイヤー側が持ってゲームに渡します</b>。そのためカートリッジは小さく作れます。代わりに、それらを使うゲームは単体ファイルだけでは完結しません（プレイヤー上で動かす前提です）。プレイヤーが持っている共通部品は次の通りです。</p>
+  <ul class="note" style="line-height:1.9">
+    <li>標準フォント5種（HP Serif／HP Sans／HP Round／HP Mono／HP Dot）</li>
+    <li>アイコンフォント RPG Awesome（モンスターや武器のアイコン）</li>
+    <li>hp.js（2D向けの共通部品: 入力・ゲームループ・効果音）</li>
+    <li>three.js（3D向けライブラリ、r128）</li>
+  </ul>
 
   <h2>カートリッジのURLを作る</h2>
   <p class="note">HTMLファイルがある場所のURLを入れると、その中身を圧縮して「URL埋め込み形式」のURLを作ります。読み込めないサイトの場合は、HTMLを直接貼り付けてください。（圧縮はブラウザ標準の機能で行います。サーバーには送りません）カートリッジの作り方の仕様書は <a href="https://github.com/oosawak/html-player/blob/main/CARTRIDGE.md" target="_blank" rel="noopener">CARTRIDGE.md</a>（AIに読ませて作らせるためのものです）。</p>
