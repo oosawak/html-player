@@ -7,25 +7,20 @@
 body{margin:0;background:#0a0616;color:#f0eaff;font-family:"HP Sans",sans-serif;text-align:center;-webkit-tap-highlight-color:transparent}
 #w{max-width:480px;margin:auto;padding:10px}
 h1{font-size:19px;letter-spacing:.14em;margin:4px}
-.s{font-size:12px;color:#a493d8}
 canvas{width:100%;background:#070313;border:1px solid #5a489e;border-radius:6px;touch-action:none;display:block;margin:8px auto}
-button.act{font-size:15px;padding:10px 26px;background:#7c2128;color:#fff;border:1px solid #d8b46a;border-radius:6px;letter-spacing:.12em;cursor:pointer}
 .note{font-size:11px;color:#8d7fc0;line-height:1.7;text-align:left}
 </style></head><body><div id="w">
 <h1>リングバースト</h1>
-<div class="s">攻撃は「自分の周りに広がる円」だけ。ゲージが溜まったらタップで発動。</div>
 <canvas id="cv" width="480" height="360"></canvas>
-<button class="act" id="go">スタート</button>
-<div class="note">・タッチ（ドラッグ）か十字キーで移動。自機は進む方向を向く<br>・ゲージ満タンでタップ（Aボタンでも可）。円形の攻撃が広がって敵を消します<br>・敵に当たるとエネルギー減。0でミッション失敗</div>
+<div class="note">・タッチ（ドラッグ）か十字キーで移動<br>・玉は自動で一番近い敵を追尾。ゲージ満タンでタップ（Aボタンでも可）すると円形バースト<br>・敵に当たるとエネルギー減。0でミッション失敗</div>
 </div><script>
 "use strict";
 const cv=document.getElementById("cv"),g=cv.getContext("2d");
 const W=480,H=360;
-let state=0,score=0,best=0,energy=100,gauge=0,invuln=0,spawnT=0,t=0,playT=0;
+let state=0,score=0,best=0,energy=100,gauge=0,invuln=0,spawnT=0,t=0,playT=0,fireWait=0;
 try{best=+localStorage.getItem("rb")||0}catch(e){}
 const ship={x:W/2,y:H/2,ang:-Math.PI/2};
-let foes=[],stars=[],burst=null;
-for(let i=0;i<44;i++)stars.push({x:Math.random()*W,y:Math.random()*H});
+let foes=[],burst=null,bullets=[];
 let touch=null,downAt=0,downPos=null,moved=false;
 function pos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 cv.addEventListener("pointerdown",e=>{
@@ -42,31 +37,30 @@ addEventListener("pointerup",()=>{
  touch=null;
 });
 function start(){
- state=1;score=0;energy=100;gauge=0;playT=0;foes=[];burst=null;spawnT=0;invuln=0;
+ state=1;score=0;energy=100;gauge=0;playT=0;foes=[];burst=null;bullets=[];spawnT=0;invuln=0;
  ship.x=W/2;ship.y=H/2;ship.ang=-Math.PI/2;
 }
-document.getElementById("go").onclick=start;
 function fire(){
  if(state!==1||gauge<100||burst)return;
  burst={r:12};gauge=0;HP.beep(160,0.3,"sawtooth",0.05);
 }
 function circle(x,y,r,c){g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
-function spawnFoe(){
- const a=Math.random()*Math.PI*2,d=330;
- const r=9+Math.random()*7;
- foes.push({x:ship.x+Math.cos(a)*d,y:ship.y+Math.sin(a)*d,r:r,
-  vy:30+Math.random()*26+playT*0.7,col:r<13?"#c06ae0":"#e05252"});
-}
 HP.loop(dt=>{
  t+=dt;
  if(state!==1&&HP.bHit())start();
  if(state===1&&HP.aHit())fire();
  g.fillStyle="#070313";g.fillRect(0,0,W,H);
- g.fillStyle="#9d8ce0";
- stars.forEach(s=>{g.fillRect(s.x,s.y,2,2)});
  if(state===1){
   playT+=dt;
   gauge=Math.min(100,gauge+22*dt);
+  fireWait-=dt;
+  if(fireWait<=0&&foes.length){
+   let tgt=null,bd=1e9;
+   for(const f of foes){const dd=(f.x-ship.x)**2+(f.y-ship.y)**2;if(dd<bd){bd=dd;tgt=f}}
+   const a=Math.atan2(tgt.y-ship.y,tgt.x-ship.x);
+   bullets.push({x:ship.x,y:ship.y,vx:Math.cos(a)*300,vy:Math.sin(a)*300,tgt:tgt,life:1.3});
+   fireWait=0.3;
+  }
   let mx=0,my=0;
   if(HP.left())mx-=1;
   if(HP.right())mx+=1;
@@ -85,14 +79,18 @@ HP.loop(dt=>{
   ship.y=Math.max(30,Math.min(H-14,ship.y));
   energy=Math.min(100,energy+6*dt);
   spawnT-=dt;
-  if(spawnT<=0){spawnFoe();spawnT=Math.max(0.3,1.0-playT*0.012)}
+  if(spawnT<=0){
+   const a=Math.random()*Math.PI*2,r=9+Math.random()*7;
+   foes.push({x:ship.x+Math.cos(a)*330,y:ship.y+Math.sin(a)*330,r:r,vy:30+Math.random()*26+playT*0.7,col:r<13?"#c06ae0":"#e05252"});
+   spawnT=Math.max(0.3,1.0-playT*0.012);
+  }
   if(invuln>0)invuln-=dt;
   if(burst){
    burst.r+=280*dt;
    const br=burst.r;
    foes=foes.filter(f=>{
     if(Math.hypot(f.x-ship.x,f.y-ship.y)<=br+10){
-     score+=f.r<13?150:100;energy=Math.min(100,energy+1);HP.beep(240,0.06);
+     score+=f.r<13?150:100;
      return false;
     }
     return true;
@@ -100,12 +98,24 @@ HP.loop(dt=>{
    if(br>175)burst=null;
   }
  }
+ bullets.forEach(b=>{
+  b.life-=dt;
+  if(b.tgt&&foes.indexOf(b.tgt)>=0){
+   const a=Math.atan2(b.tgt.y-b.y,b.tgt.x-b.x);
+   b.vx=Math.cos(a)*300;b.vy=Math.sin(a)*300;
+  }
+  b.x+=b.vx*dt;b.y+=b.vy*dt;
+ });
+ bullets=bullets.filter(b=>b.life>0&&!b.hit);
  foes.forEach(f=>{
   const a=Math.atan2(ship.y-f.y,ship.x-f.x);
   f.x+=Math.cos(a)*f.vy*dt;f.y+=Math.sin(a)*f.vy*dt;
  });
  if(state===1){
   foes=foes.filter(f=>{
+   for(const b of bullets){
+    if(!b.hit&&Math.hypot(b.x-f.x,b.y-f.y)<f.r+3){b.hit=true;score+=f.r<13?150:100;HP.beep(220,0.06);return false}
+   }
    if(invuln<=0&&Math.hypot(ship.x-f.x,ship.y-f.y)<f.r+11){
     energy-=12;invuln=0.8;HP.beep(90,0.25,"sawtooth",0.05);return false;
    }
@@ -114,10 +124,9 @@ HP.loop(dt=>{
   if(energy<=0){energy=0;state=2;if(score>best){best=score;try{localStorage.setItem("rb",best)}catch(e){}}}
  }
  foes.forEach(f=>circle(f.x,f.y,f.r,f.col));
+ bullets.forEach(b=>circle(b.x,b.y,3,"#ffe9a8"));
  if(burst){
   g.strokeStyle="#ffd94a";g.lineWidth=5;
-  g.beginPath();g.arc(ship.x,ship.y,burst.r,0,7);g.stroke();
-  g.strokeStyle="rgba(255,217,74,.35)";g.lineWidth=14;
   g.beginPath();g.arc(ship.x,ship.y,burst.r,0,7);g.stroke();
  }
  if(state!==2&&!(invuln>0&&((t*10)|0)%2)){
@@ -125,10 +134,6 @@ HP.loop(dt=>{
   g.fillStyle="#57b7ff";
   g.beginPath();g.moveTo(15,0);g.lineTo(-11,-11);g.lineTo(-5,0);g.lineTo(-11,11);g.closePath();g.fill();
   g.restore();
-  if(gauge>=100){
-   g.strokeStyle="rgba(255,217,74,.8)";g.lineWidth=2;
-   g.beginPath();g.arc(ship.x,ship.y,22+Math.sin(t*6)*2,0,7);g.stroke();
-  }
  }
  g.font='13px "HP Mono",monospace';g.fillStyle="#f0eaff";g.textAlign="left";
  g.fillText("SCORE "+score,10,18);
@@ -139,14 +144,13 @@ HP.loop(dt=>{
  g.fillText("BURST",246,36);
  g.fillStyle="#2a3c5f";g.fillRect(300,26,150,10);
  g.fillStyle=gauge>=100?"#ffd94a":"#8d7fc0";g.fillRect(300,26,150*gauge/100,10);
- if(gauge>=100)g.fillText("TAP!",W-52,54);
  if(state===0){
   g.fillStyle="#f0eaff";g.textAlign="center";
   g.font='700 25px "HP Sans",sans-serif';g.fillText("RING BURST",W/2,140);
   g.font='13px "HP Sans",sans-serif';
-  g.fillText("敵は全方位から来る。攻撃は円形バーストだけ",W/2,178);
-  g.fillText("ゲージが溜まったらタップで発動",W/2,202);
-  g.fillText("Bボタンかタップでスタート",W/2,234);
+  g.fillText("敵は全方位から来る。玉は自動追尾",W/2,182);
+  g.fillText("ゲージ満タンでタップするとバースト",W/2,206);
+  g.fillText("Bボタンかタップでスタート",W/2,238);
   g.textAlign="left";
  }
  if(state===2){
