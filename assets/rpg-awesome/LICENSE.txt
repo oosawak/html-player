@@ -1,0 +1,5 @@
+RPG Awesome (https://github.com/nagoshiashumari/Rpg-Awesome)
+- The RPG Awesome font is licensed under the SIL OFL 1.1: http://scripts.sil.org/OFL
+- RPG Awesome CSS and SASS files are licensed under the MIT License: http://opensource.org/licenses/mit-license.html
+- Attribution is appreciated but not required.
+This copy is redistributed by the HTML Player project under those licenses.
