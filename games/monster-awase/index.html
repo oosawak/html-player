@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>モンスターあわせ ― アイコン神経衰弱</title>
+<link rel="stylesheet" href="https://oosawak.github.io/html-player/assets/rpg-awesome/css/rpg-awesome.min.css">
+<style>
+body{margin:0;background:#17102a;color:#efe8ff;font-family:"HP Sans",sans-serif;text-align:center;-webkit-tap-highlight-color:transparent}
+#w{max-width:480px;margin:auto;padding:10px}
+h1{font-size:19px;letter-spacing:.1em;margin:4px}
+.s{font-size:12px;color:#b9a8e8}
+#st{min-height:24px;font-size:14px;margin:8px}
+#grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px auto;max-width:430px}
+.card{aspect-ratio:3/4;border:2px solid #6b5a9e;border-radius:8px;background:#241845;color:#efe8ff;font-size:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.card.back{background:repeating-linear-gradient(45deg,#241845,#241845 8px,#2e2060 8px,#2e2060 16px);color:#8f7fd0;font-size:24px}
+.card.open{background:#f3efff;color:#3a2a6e;border-color:#d8b46a}
+.card.done{background:#2e5e3a;color:#ffe9a8;border-color:#7fd48a;cursor:default}
+button.act{font-size:15px;padding:10px 26px;background:#7c2128;color:#fff;border:1px solid #d8b46a;border-radius:6px;letter-spacing:.12em;cursor:pointer}
+.note{font-size:11px;color:#9a8bc4;line-height:1.7;text-align:left;margin-top:12px}
+</style></head><body><div id="w">
+<h1>モンスターあわせ</h1>
+<div class="s">伏せたカードを2枚めくって、同じモンスターをそろえる神経衰弱。</div>
+<div id="st"></div>
+<div id="grid"></div>
+<button class="act" id="restart">最初から</button>
+<div class="note">・アイコンは RPG Awesome（アイコンフォント）を使用。フォントはプレイヤー側が供給するので、このゲーム本体には入っていません<br>・手数が少ないほど上手です</div>
+</div><script>
+"use strict";
+const ICONS=["ra-dragon","ra-hydra","ra-eye-monster","ra-cat","ra-death-skull","ra-batwings","ra-snake","ra-octopus"];
+let deck=[],open=[],done=0,moves=0,lock=false,t0=null,best=null;
+try{best=localStorage.getItem("ma")}catch(e){}
+const grid=document.getElementById("grid"),stEl=document.getElementById("st");
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function status(msg){
+ let s="手数 "+moves+"　そろった組 "+done+" / 8";
+ if(t0)s+="　"+(((Date.now()-t0)/1000)|0)+" 秒";
+ if(best!==null)s+="　最少手数 "+best;
+ stEl.textContent=msg||s;
+}
+function render(){
+ grid.innerHTML="";
+ deck.forEach((ic,i)=>{
+  const b=document.createElement("button");
+  const isOpen=open.includes(i),isDone=ic.done;
+  b.className="card "+(isDone?"done":isOpen?"open":"back");
+  b.innerHTML=(isOpen||isDone)?'<i class="ra '+ic.n+'"></i>':"？";
+  b.onclick=()=>flip(i);
+  grid.appendChild(b);
+ });
+ status();
+}
+function flip(i){
+ if(lock||open.includes(i)||deck[i].done)return;
+ if(!t0)t0=Date.now();
+ open.push(i);render();
+ if(open.length<2)return;
+ moves++;
+ const[a,b]=open;
+ if(deck[a].n===deck[b].n){
+  deck[a].done=deck[b].done=true;open=[];done++;
+  if(done===8){
+   if(best===null||moves<+best){best=moves;try{localStorage.setItem("ma",moves)}catch(e){}}
+   render();status("全てそろえた！ "+moves+" 手、"+(((Date.now()-t0)/1000)|0)+" 秒でした");
+   return;
+  }
+  render();
+ }else{
+  lock=true;render();
+  setTimeout(()=>{open=[];lock=false;render()},700);
+ }
+}
+function start(){
+ deck=shuffle(ICONS.concat(ICONS).map(n=>({n:n,done:false})));
+ open=[];done=0;moves=0;lock=false;t0=null;
+ render();
+}
+document.getElementById("restart").onclick=start;
+start();
+</script></body></html>

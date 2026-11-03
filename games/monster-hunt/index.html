@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>モンスターハント ― アイコン射撃場</title>
+<link rel="stylesheet" href="https://oosawak.github.io/html-player/assets/rpg-awesome/css/rpg-awesome.min.css">
+<style>
+body{margin:0;background:#101623;color:#eaf2ff;font-family:"HP Sans",sans-serif;text-align:center;-webkit-tap-highlight-color:transparent}
+#w{max-width:480px;margin:auto;padding:10px}
+h1{font-size:19px;letter-spacing:.1em;margin:4px}
+.s{font-size:12px;color:#9fb4d8}
+#st{min-height:24px;font-size:15px;margin:8px}
+#grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px auto;max-width:430px}
+.cell{aspect-ratio:1;border:2px solid #39558a;border-radius:8px;background:#182a4a;color:#fff;font-size:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+.cell.cur{outline:3px solid #ffd94a;outline-offset:-3px}
+.cell.cat{color:#ffd9ec}
+.cell.hit{background:#5e2e2e;color:#ffe9a8;border-color:#d48a7f}
+.cell.bad{background:#5e2e4e}
+button.act{font-size:15px;padding:10px 26px;background:#7c2128;color:#fff;border:1px solid #d8b46a;border-radius:6px;letter-spacing:.12em;cursor:pointer}
+.note{font-size:11px;color:#8498bd;line-height:1.7;text-align:left;margin-top:12px}
+</style></head><body><div id="w">
+<h1>モンスターハント</h1>
+<div class="s">現れたモンスターを撃つ、30秒の射撃場。猫は撃つと減点。</div>
+<div id="st"></div>
+<div id="grid"></div>
+<button class="act" id="go">スタート</button>
+<div class="note">・タップでも、十字キー＋Aボタンでも遊べます（十字キー: 照準を動かす／A: 撃つ／B: スタート）<br>・アイコンは RPG Awesome（アイコンフォント）。フォントはプレイヤー側が供給するので本体には入っていません<br>・モンスター +100点、猫は −300点</div>
+</div><script>
+"use strict";
+const M=["ra-dragon","ra-hydra","ra-eye-monster","ra-batwings","ra-snake","ra-octopus"];
+const cells=[],grid=document.getElementById("grid"),stEl=document.getElementById("st");
+let score=0,timeLeft=0,playing=false,spawnT=null,tickT=null,best=null,cur=5;
+try{best=localStorage.getItem("mh")}catch(e){}
+function drawCur(){cells.forEach((c,i)=>c.el.classList.toggle("cur",i===cur))}
+for(let i=0;i<12;i++){
+ const d=document.createElement("div");d.className="cell";
+ d.onclick=()=>{cur=i;drawCur();shoot(i)};
+ grid.appendChild(d);cells.push({el:d,mon:null,cat:false,timer:null});
+}
+drawCur();
+function status(msg){
+ stEl.textContent=msg||("スコア "+score+"　残り "+Math.max(0,timeLeft)+" 秒"+(best!==null?"　ベスト "+best:""));
+}
+function clearCell(c){
+ if(c.timer)clearTimeout(c.timer);
+ c.mon=null;c.cat=false;c.el.className="cell";c.el.innerHTML="";drawCur();
+}
+function spawn(){
+ const free=cells.filter(c=>!c.mon);
+ if(!free.length)return;
+ const c=free[(Math.random()*free.length)|0];
+ const cat=Math.random()<0.12;
+ c.cat=cat;c.mon=cat?"ra-cat":M[(Math.random()*M.length)|0];
+ c.el.className="cell"+(cat?" cat":"");
+ c.el.innerHTML='<i class="ra '+c.mon+'"></i>';
+ drawCur();
+ const life=Math.max(520,950-(30-timeLeft)*12);
+ c.timer=setTimeout(()=>clearCell(c),life);
+}
+function shoot(i){
+ if(!playing)return;
+ const c=cells[i];
+ if(!c.mon)return;
+ if(c.timer)clearTimeout(c.timer);
+ if(c.cat){
+  score-=300;c.el.className="cell bad";
+ }else{
+  score+=100;c.el.className="cell hit";c.el.innerHTML='<i class="ra ra-death-skull"></i>';
+ }
+ c.mon=null;drawCur();
+ const cc=c;setTimeout(()=>clearCell(cc),180);
+ status();
+}
+function start(){
+ cells.forEach(clearCell);
+ score=0;timeLeft=30;playing=true;status();
+ document.getElementById("go").textContent="もう一度";
+ clearInterval(spawnT);clearInterval(tickT);
+ spawnT=setInterval(()=>{spawn();if(timeLeft<18)spawn()},620);
+ tickT=setInterval(()=>{
+  timeLeft--;status();
+  if(timeLeft<=0){
+   playing=false;clearInterval(spawnT);clearInterval(tickT);
+   cells.forEach(clearCell);
+   if(best===null||score>+best){best=score;try{localStorage.setItem("mh",score)}catch(e){}}
+   status("終了！ スコア "+score+(best!==null?"　ベスト "+best:""));
+  }
+ },1000);
+ spawn();spawn();
+}
+document.getElementById("go").onclick=start;
+document.addEventListener("keydown",e=>{
+ if(e.repeat)return;
+ const k=e.code;
+ if(k==="ArrowLeft"){cur=(cur+11)%12;drawCur();e.preventDefault()}
+ else if(k==="ArrowRight"){cur=(cur+1)%12;drawCur();e.preventDefault()}
+ else if(k==="ArrowUp"){cur=(cur+8)%12;drawCur();e.preventDefault()}
+ else if(k==="ArrowDown"){cur=(cur+4)%12;drawCur();e.preventDefault()}
+ else if(k==="Space"){shoot(cur);e.preventDefault()}
+ else if(k==="KeyX"){start()}
+});
+status("スタートを押すか、Bボタンを押してください");
+</script></body></html>
