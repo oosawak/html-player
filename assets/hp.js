@@ -43,10 +43,10 @@ var HP={
     g.fillStyle=fill||"rgba(10,14,30,.85)";g.fillRect(x,y,w,h);
     if(stroke){g.strokeStyle=stroke;g.strokeRect(x,y,w,h)}
   },
-  title:function(g,W,H,title,lines,color){
+  title:function(g,W,H,title,lines,color,font){
     g.fillStyle=color||"#fff";g.textAlign="center";
-    g.font='700 25px "HP Sans",sans-serif';g.fillText(title,W/2,H/2-40);
-    g.font='13px "HP Sans",sans-serif';
+    g.font=(font?'26px ':'700 25px ')+(font||'"HP Sans",sans-serif');g.fillText(title,W/2,H/2-40);
+    g.font=(font?'14px ':'13px ')+(font||'"HP Sans",sans-serif');
     (lines||[]).forEach(function(s,i){g.fillText(s,W/2,H/2-8+i*22)});
     g.textAlign="left";
   },
