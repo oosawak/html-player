@@ -128,7 +128,9 @@ r128 の three.min.js をプレイヤー側に置いてあります。
 
 作りたいゲームの内容は、雛形（TEMPLATE.md）に沿って書くと伝わりやすくなります。雛形には記入例（一騎討ち）も付けています。
 
-1. この仕様書を読ませる。
+**AIに作らせる流れ**: 記入した雛形と、この仕様書をセットでAIに渡すと、仕様に沿った単一HTMLのゲームが返ってきます。共通ライブラリー（hp.js）や標準フォント、アイコンはプレイヤー側にあるので、ゲーム側はそれを使う前提で書かせてください。
+
+1. 雛形（TEMPLATE.md）に沿ってゲームの内容を書き、この仕様書と一緒にAIへ渡す。
 2. ゲームのルールを短く決める（1ゲーム＝1つの芯の遊び）。
 3. 単一HTMLで実装する。見た目は Canvas か DOM、音は WebAudio の簡単な効果音まで。
 4. プレイヤーのツールで埋め込みURLを作り、サイズを確認する。超える場合は、演出と文章から削る。
@@ -136,9 +138,14 @@ r128 の three.min.js をプレイヤー側に置いてあります。
 
 ## 収録済みカートリッジ（手本）
 
-- 一騎討ち ― 刹那の一閃（反射神経、タップとSpace）: https://github.com/oosawak/ikkiuchi
-- 一人麻雀（タップ操作）: https://github.com/oosawak/hitori-mahjong
-- 上海 ― 牌消し（タップ操作）: https://github.com/oosawak/shanghai
+いずれも、このリポジトリの `games/` にあります。
+
+- 一騎討ち ― 刹那の一閃（反射神経、タップとSpace）: games/ikkiuchi/
+- 一人麻雀（タップ操作）: games/hitori-mahjong/
+- 上海 ― 牌消し（タップ操作）: games/shanghai/
+- モンスターあわせ（RPG Awesomeのアイコン使用）: games/monster-awase/
+- スターブレイカー（hp.js使用、全方位シューティング＋自動追尾弾）: games/star-breaker/
+- リングバースト（hp.js使用、自動追尾弾＋円形バースト）: games/ring-burst/
 
 ## ライセンス
 
