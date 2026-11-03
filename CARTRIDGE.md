@@ -92,6 +92,35 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
   - シェルでは `tools/make-url.sh <ファイル|URL>` でも作れます。
 - 圧縮は gzip（ブラウザ標準の CompressionStream / DecompressionStream）です。
 
+## 共通部品（フレームワーク）
+
+素のJavaScriptで全部書くと、入力やループなどの決まり文句が毎回増えます。プレイヤーが共通部品を供給するので、ゲーム側は読み込んで使うだけです（フォントやアイコンと同じ考え方）。
+
+### hp.js（2D向けの小さな共通部品）
+
+```html
+<script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
+```
+
+- `HP.loop(function(dt){ ... })` — ゲームループ。dt は前フレームからの秒数
+- `HP.left() / HP.right() / HP.up() / HP.down()` — 十字キー（押されている間）
+- `HP.a() / HP.b()` — Aボタン（Space）／Bボタン（KeyX）（押されている間）
+- `HP.aHit() / HP.bHit()` — 押した瞬間だけ true
+- `HP.beep(freq, dur, type, vol)` — 簡単な効果音（WebAudio）
+
+### three.js（3D向け）
+
+r128 の three.min.js をプレイヤー側に置いてあります。
+
+```html
+<script src="https://oosawak.github.io/html-player/assets/three.min.js"></script>
+```
+
+- ライセンスは MIT（Three.js Authors）
+- 大型の3Dゲームは、これまで通り自前でライブラリを読む形（URL指定）でも構いません
+
+どちらも、埋め込み形式（#p=）のゲームからも使えます（プレイヤー上で動くため）。単体ファイルとして保存して配る場合は、部品も含めた自己完結にはならない点に注意してください。
+
 ## 作り方の手順（AIに作らせる場合の型）
 
 - 置き場所: 原則として、このプレイヤーリポジトリの `games/<名前>/` に置きます（カートリッジごとのリポジトリは作りません）。大型の既存プロジェクトは元の場所のままで、URL指定で差します。

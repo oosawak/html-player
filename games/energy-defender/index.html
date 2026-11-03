@@ -2,6 +2,7 @@
 <html lang="ja"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>エナジーディフェンダー ― 宇宙シューティング</title>
+<script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
 <style>
 body{margin:0;background:#05070f;color:#dfe9ff;font-family:"HP Sans",sans-serif;text-align:center;-webkit-tap-highlight-color:transparent}
 #w{max-width:480px;margin:auto;padding:10px}
@@ -25,14 +26,7 @@ try{best=+localStorage.getItem("ed")||0}catch(e){}
 const ship={x:W/2,y:H-46};
 let bullets=[],foes=[],planets=[],stars=[];
 for(let i=0;i<44;i++)stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.4+0.3});
-const keys={};
 let touch=null;
-document.addEventListener("keydown",e=>{
- keys[e.code]=true;
- if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].includes(e.code))e.preventDefault();
- if(e.code==="KeyX"&&state!==1)start();
-});
-document.addEventListener("keyup",e=>{keys[e.code]=false});
 function pos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 cv.addEventListener("pointerdown",e=>{touch=pos(e);if(state!==1)start()});
 cv.addEventListener("pointermove",e=>{if(touch)touch=pos(e)});
@@ -43,25 +37,25 @@ function start(){
 }
 document.getElementById("go").onclick=start;
 function circle(x,y,r,c){g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
-let prev=performance.now();
-function frame(now){
- const dt=Math.min(0.05,(now-prev)/1000);prev=now;t+=dt;
+HP.loop(dt=>{
+ t+=dt;
+ if(state!==1&&HP.bHit())start();
  g.fillStyle="#02030a";g.fillRect(0,0,W,H);
- g.fillStyle="#aFC4ee";
+ g.fillStyle="#afc4ee";
  stars.forEach(s=>{s.y+=s.s*(state===1?26:8)*dt;if(s.y>H){s.y=0;s.x=Math.random()*W}g.fillRect(s.x,s.y,2,2)});
  if(state===1){
   const sp=200*dt;
-  if(keys.ArrowLeft)ship.x-=sp;
-  if(keys.ArrowRight)ship.x+=sp;
-  if(keys.ArrowUp)ship.y-=sp;
-  if(keys.ArrowDown)ship.y+=sp;
+  if(HP.left())ship.x-=sp;
+  if(HP.right())ship.x+=sp;
+  if(HP.up())ship.y-=sp;
+  if(HP.down())ship.y+=sp;
   if(touch){ship.x+=(touch.x-ship.x)*0.3;ship.y+=(touch.y-14-ship.y)*0.3}
   ship.x=Math.max(14,Math.min(W-14,ship.x));
   ship.y=Math.max(40,Math.min(H-14,ship.y));
   fireWait-=dt;
-  if(((keys.Space||touch)&&fireWait<=0&&energy>=4)){
+  if((HP.a()||touch)&&fireWait<=0&&energy>=4){
    bullets.push({x:ship.x,y:ship.y-16});
-   energy-=4;lastShot=t;fireWait=0.13;
+   energy-=4;lastShot=t;fireWait=0.13;HP.beep(880,0.05,"square",0.02);
   }
   if(t-lastShot>0.6)energy=Math.min(100,energy+15*dt);
   spawnT-=dt;
@@ -82,13 +76,12 @@ function frame(now){
  foes.forEach(f=>{f.y+=f.vy*dt;f.x+=Math.sin(t*2+f.ph)*14*dt});
  planets.forEach(p=>p.y+=p.vy*dt);
  planets=planets.filter(p=>p.y-p.r<H+8);
- let dead=false;
  foes=foes.filter(f=>{
   for(const b of bullets){
-   if(!b.hit&&Math.hypot(b.x-f.x,b.y-f.y)<f.r+3){b.hit=true;score+=f.r<13?150:100;return false}
+   if(!b.hit&&Math.hypot(b.x-f.x,b.y-f.y)<f.r+3){b.hit=true;score+=f.r<13?150:100;HP.beep(220,0.07);return false}
   }
   if(f.y-f.r>H){energy-=5;return false}
-  if(invuln<=0&&Math.hypot(ship.x-f.x,ship.y-f.y)<f.r+11){energy-=18;invuln=1;return false}
+  if(invuln<=0&&Math.hypot(ship.x-f.x,ship.y-f.y)<f.r+11){energy-=18;invuln=1;HP.beep(90,0.25,"sawtooth",0.05);return false}
   return true;
  });
  bullets=bullets.filter(b=>{
@@ -98,7 +91,7 @@ function frame(now){
  });
  if(state===1){
   for(const p of planets){
-   if(invuln<=0&&Math.hypot(ship.x-p.x,ship.y-p.y)<p.r+10){energy-=25;invuln=1.2;break}
+   if(invuln<=0&&Math.hypot(ship.x-p.x,ship.y-p.y)<p.r+10){energy-=25;invuln=1.2;HP.beep(70,0.3,"sawtooth",0.05);break}
   }
   if(energy<=0){energy=0;state=2;if(score>best){best=score;try{localStorage.setItem("ed",best)}catch(e){}}}
  }
@@ -132,7 +125,5 @@ function frame(now){
   g.font='13px "HP Sans",sans-serif';g.fillText("Bボタンかタップでもう一度",W/2,222);
   g.textAlign="left";
  }
- requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
+});
 </script></body></html>
