@@ -38,10 +38,10 @@ function start(){
 document.getElementById("go").onclick=start;
 function circle(x,y,r,c){g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
 function spawnFoe(){
- const a=Math.random()*Math.PI*2,d=330;
- const r=9+Math.random()*7;
- foes.push({x:ship.x+Math.cos(a)*d,y:ship.y+Math.sin(a)*d,r:r,
-  vy:30+Math.random()*26+playT*0.7,col:r<13?"#c06ae0":"#e05252"});
+ const a=Math.random()*Math.PI*2,d=330,big=Math.random()<0.12;
+ const r=big?24:9+Math.random()*7;
+ foes.push({x:ship.x+Math.cos(a)*d,y:ship.y+Math.sin(a)*d,r:r,big:big,hp:5,
+  vy:(big?17:30)+Math.random()*26+playT*0.7,col:big?"#d88f2c":(r<13?"#c06ae0":"#e05252")});
 }
 HP.loop(dt=>{
  t+=dt;
@@ -100,12 +100,16 @@ HP.loop(dt=>{
  foes=foes.filter(f=>{
   for(const b of bullets){
    if(!b.hit&&Math.hypot(b.x-f.x,b.y-f.y)<f.r+3){
-    b.hit=true;score+=f.r<13?150:100;energy=Math.min(100,energy+2);
-    HP.beep(220,0.07);return false;
+    b.hit=true;HP.beep(220,0.07);
+    if(f.big){f.hp--;if(f.hp>0)return true;score+=500}
+    else score+=f.r<13?150:100;
+    energy=Math.min(100,energy+2);return false;
    }
   }
   if(invuln<=0&&Math.hypot(ship.x-f.x,ship.y-f.y)<f.r+11){
-   energy-=12;invuln=0.8;HP.beep(90,0.25,"sawtooth",0.05);return false;
+   energy-=f.big?18:12;invuln=f.big?1:0.8;HP.beep(90,0.25,"sawtooth",0.05);
+   if(f.big){const a=Math.atan2(f.y-ship.y,f.x-ship.x);f.x+=Math.cos(a)*34;f.y+=Math.sin(a)*34;return true}
+   return false;
   }
   return true;
  });
@@ -113,7 +117,7 @@ HP.loop(dt=>{
  if(state===1){
   if(energy<=0){energy=0;state=2;if(score>best){best=score;try{localStorage.setItem("sb",best)}catch(e){}}}
  }
- foes.forEach(f=>circle(f.x,f.y,f.r,f.col));
+ foes.forEach(f=>{circle(f.x,f.y,f.r,f.col);if(f.big)HP.bar(g,f.x-18,f.y-f.r-11,36,5,f.hp/5,"#ffd94a")});
  g.fillStyle="#ffe9a8";
  bullets.forEach(b=>circle(b.x,b.y,3,"#ffe9a8"));
  if(state!==2&&!(invuln>0&&((t*10)|0)%2)){
@@ -122,27 +126,11 @@ HP.loop(dt=>{
   g.beginPath();g.moveTo(15,0);g.lineTo(-11,-11);g.lineTo(-5,0);g.lineTo(-11,11);g.closePath();g.fill();
   g.restore();
  }
- g.font='13px "HP Mono",monospace';g.fillStyle="#dfe9ff";g.textAlign="left";
- g.fillText("SCORE "+score,10,18);
- g.textAlign="right";g.fillText("HI "+best,W-10,18);g.textAlign="left";
- g.fillText("ENERGY",10,36);
- g.fillStyle="#2a3c5f";g.fillRect(76,26,180,10);
- g.fillStyle=energy>30?"#57e08a":"#e05252";g.fillRect(76,26,180*energy/100,10);
- if(state===0){
-  g.fillStyle="#dfe9ff";g.textAlign="center";
-  g.font='700 25px "HP Sans",sans-serif';g.fillText("STAR BREAKER",W/2,140);
-  g.font='13px "HP Sans",sans-serif';
-  g.fillText("敵は全方位から来る。ショットは自動追尾",W/2,178);
-  g.fillText("エネルギーが尽きたらミッション失敗",W/2,202);
-  g.fillText("Bボタンかタップでスタート",W/2,234);
-  g.textAlign="left";
- }
- if(state===2){
-  g.fillStyle="#dfe9ff";g.textAlign="center";
-  g.font='700 24px "HP Sans",sans-serif';g.fillText("SIGNAL LOST",W/2,158);
-  g.font='15px "HP Sans",sans-serif';g.fillText("MISSION FAILED ― SCORE "+score,W/2,190);
-  g.font='13px "HP Sans",sans-serif';g.fillText("Bボタンかタップでもう一度",W/2,222);
-  g.textAlign="left";
- }
+ HP.text(g,"SCORE "+score,10,18,13,"#dfe9ff");
+ HP.text(g,"HI "+best,W-10,18,13,"#dfe9ff","right");
+ HP.text(g,"ENERGY",10,36,13,"#dfe9ff");
+ HP.bar(g,76,26,180,10,energy/100,energy>30?"#57e08a":"#e05252");
+ if(state===0)HP.title(g,W,H,"STAR BREAKER",["敵は全方位から来る。ショットは自動追尾","エネルギーが尽きたらミッション失敗","Bボタンかタップでスタート"],"#dfe9ff");
+ if(state===2)HP.title(g,W,H,"SIGNAL LOST",["MISSION FAILED ― SCORE "+score,"Bボタンかタップでもう一度"],"#dfe9ff");
 });
 </script></body></html>
