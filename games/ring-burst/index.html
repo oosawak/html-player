@@ -19,7 +19,7 @@ const cv=document.getElementById("cv"),g=cv.getContext("2d");
 const W=480,H=360;
 let state=0,score=0,best=0,energy=100,gauge=0,invuln=0,spawnT=0,t=0,playT=0,fireWait=0;
 try{best=+localStorage.getItem("rb")||0}catch(e){}
-const ship={x:W/2,y:H/2,ang:-Math.PI/2};
+const ship={x:W/2,y:H/2,ang:-Math.PI/2,aim:-Math.PI/2,aimT:9};
 let foes=[],burst=null,bullets=[];
 let touch=null,downAt=0,downPos=null,moved=false;
 function pos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
@@ -51,7 +51,7 @@ HP.loop(dt=>{
  if(state===1&&HP.aHit())fire();
  g.fillStyle="#070313";g.fillRect(0,0,W,H);
  if(state===1){
-  playT+=dt;
+  playT+=dt;ship.aimT+=dt;
   gauge=Math.min(100,gauge+22*dt);
   fireWait-=dt;
   if(fireWait<=0){
@@ -59,6 +59,7 @@ HP.loop(dt=>{
    for(const f of foes){const dd=(f.x-ship.x)**2+(f.y-ship.y)**2;if(dd<bd){bd=dd;tgt=f}}
    if(tgt){
     const a=Math.atan2(tgt.y-ship.y,tgt.x-ship.x);
+    ship.aim=a;ship.aimT=0;
     bullets.push({x:ship.x,y:ship.y,vx:Math.cos(a)*300,vy:Math.sin(a)*300,tgt:tgt,life:0.75});
     fireWait=0.3;
    }
@@ -140,7 +141,7 @@ HP.loop(dt=>{
   g.beginPath();g.arc(ship.x,ship.y,burst.r,0,7);g.stroke();
  }
  if(state!==2&&!(invuln>0&&((t*10)|0)%2)){
-  g.save();g.translate(ship.x,ship.y);g.rotate(ship.ang);
+  g.save();g.translate(ship.x,ship.y);g.rotate(ship.aimT<0.3?ship.aim:ship.ang);
   g.fillStyle="#57b7ff";
   g.beginPath();g.moveTo(15,0);g.lineTo(-11,-11);g.lineTo(-5,0);g.lineTo(-11,11);g.closePath();g.fill();
   g.restore();
