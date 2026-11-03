@@ -3,118 +3,186 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HTMLプレイヤー v0.1 ― カートリッジを差して遊ぶ</title>
+<title>HTMLプレイヤー ― URLで配れるカートリッジ</title>
 <style>
-  html,body{margin:0;padding:0;background:#14100d;color:#f3e9d2;font-family:"Hiragino Mincho ProN","Yu Mincho",serif;-webkit-tap-highlight-color:transparent}
-  #wrap{max-width:600px;margin:0 auto;padding:12px 10px 24px}
-  header{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid #8a6b3f;padding-bottom:8px}
-  h1{font-size:19px;letter-spacing:.12em;margin:0}
-  .ver{font-size:11px;color:#c9b48a;border:1px solid #8a6b3f;border-radius:3px;padding:1px 6px}
-  #cartName{font-size:14px;color:#e8cf9a;margin:10px 2px 6px;min-height:20px}
-  #stage{background:#000;border:2px solid #8a6b3f;border-radius:6px;overflow:hidden}
-  #screen{width:100%;height:72vh;border:0;display:block;background:#201612}
-  #stage:fullscreen #screen{height:100%}
-  .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  button,select,input{font-family:inherit;font-size:14px}
-  button{background:#7c2128;color:#fff;border:1px solid #d8b46a;border-radius:6px;padding:9px 14px;cursor:pointer;letter-spacing:.08em}
-  button:active{background:#5f181e}
-  select{background:#241a12;color:#f3e9d2;border:1px solid #8a6b3f;border-radius:6px;padding:9px}
-  input{flex:1;min-width:180px;background:#241a12;color:#f3e9d2;border:1px solid #8a6b3f;border-radius:6px;padding:9px}
-  .note{font-size:12px;color:#b7a67f;line-height:1.8;margin-top:14px}
-  #toast{font-size:13px;color:#9fd48a;min-height:18px;margin-top:6px}
+  body { margin:0; background:#1a1210; color:#f3e9d2; font-family: Georgia, "Hiragino Mincho ProN", serif; }
+  #wrap { max-width: 760px; margin: 0 auto; padding: 12px; }
+  header { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  h1 { font-size: 20px; letter-spacing: .12em; margin: 6px 0; }
+  h2 { font-size: 16px; letter-spacing:.08em; margin: 22px 0 8px; border-top: 1px solid #5e4630; padding-top: 14px; }
+  .ver { font-size: 11px; color:#c9b48a; border:1px solid #8a6b3f; border-radius: 10px; padding: 1px 8px; }
+  select, input[type="text"], input[type="url"], textarea { background:#2b1a12; color:#f3e9d2; border:1px solid #8a6b3f; border-radius:6px; padding:8px; font-size:14px; box-sizing:border-box; }
+  textarea { width:100%; font-family: ui-monospace, monospace; font-size:12px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0; }
+  .row > input { flex: 1 1 220px; }
+  button { background:#7c2128; color:#fff; border:1px solid #d8b46a; border-radius:6px; padding:8px 14px; font-size:14px; letter-spacing:.06em; cursor:pointer; font-family:inherit; }
+  button.sub { background:#3a2a1a; }
+  #stage { position:relative; background:#000; border:2px solid #8a6b3f; border-radius:8px; overflow:hidden; }
+  iframe { display:block; width:100%; height:70vh; border:0; background:#111; }
+  .note { font-size:12px; color:#b7a67f; line-height:1.7; }
+  .info { font-size:13px; color:#e8d9ae; min-height: 20px; margin: 6px 0; white-space: pre-wrap; }
+  a { color:#e8c87a; }
+  #mkopen { display:none; }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <header><h1>HTMLプレイヤー</h1><span class="ver">v0.2</span></header>
-  <div id="cartName">カートリッジ: （読み込み中）</div>
-  <div id="stage"><iframe id="screen" title="game screen" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-modals" allowfullscreen></iframe></div>
+  <header>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.3</span>
+  </header>
+  <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
+
   <div class="row">
     <select id="cart">
       <option value="https://oosawak.github.io/ikkiuchi/">一騎討ち ― 刹那の一閃</option>
       <option value="https://oosawak.github.io/hitori-mahjong/">一人麻雀</option>
       <option value="https://oosawak.github.io/shanghai/">上海 ― 牌消し</option>
-      <option value="custom">URLを指定する…</option>
+      <option value="__custom">URLを指定する…</option>
     </select>
+    <input type="url" id="custom" placeholder="ゲームのURLを貼り付け" style="display:none">
+  </div>
+  <div id="stage"><iframe id="frame" title="cartridge stage"
+    sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-modals"></iframe></div>
+  <div class="row">
     <button id="reload">リロード</button>
     <button id="full">フルスクリーン</button>
-    <button id="share">共有URLをコピー</button>
+    <button id="share" class="sub">共有URLをコピー</button>
   </div>
-  <div class="row" id="customRow" style="display:none">
-    <input id="urlBox" type="url" placeholder="ゲームのURL（https://…）">
-    <button id="loadBtn">差し替える</button>
+  <p class="note">共有の形は2つあります。通常は <b>?game=ゲームのURL</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
+
+  <h2>カートリッジのURLを作る</h2>
+  <p class="note">HTMLファイルがある場所のURLを入れると、その中身を圧縮して「URL埋め込み形式」のURLを作ります。読み込めないサイトの場合は、HTMLを直接貼り付けてください。（圧縮はブラウザ標準の機能で行います。サーバーには送りません）</p>
+  <div class="row">
+    <input type="url" id="mkurl" placeholder="HTMLファイルのURL（例: https://…/game.html）">
+    <button id="mkfetch">URLから作る</button>
   </div>
-  <div id="toast"></div>
-  <div class="note">
-    カートリッジは普通のHTMLページです。URLを指定すれば、どのサイトのゲームでも差して遊べます。<br>
-    共有URLの形: このプレイヤーのURL ＋ <b>?game=ゲームのURL</b><br>
-    URLの中にゲーム本体を埋め込む形（#p= ペイロード）にも対応しています。
+  <textarea id="mkhtml" rows="5" placeholder="または、HTMLをここに貼り付け"></textarea>
+  <div class="row">
+    <button id="mktext">貼り付けたHTMLから作る</button>
+  </div>
+  <div class="info" id="mkinfo"></div>
+  <textarea id="mkout" rows="3" readonly placeholder="ここに埋め込みURLが出ます"></textarea>
+  <div class="row">
+    <button id="mkcopy" class="sub">URLをコピー</button>
+    <a id="mkopen" href="#" target="_blank" rel="noopener"><button type="button" class="sub">このURLで開く</button></a>
+  </div>
+
+  <h2>Xへの投稿文</h2>
+  <p class="note">URLを作ると、投稿文のたたき台が自動で入ります。直してからコピーして、Xに貼り付けて投稿してください。</p>
+  <textarea id="posttext" rows="7"></textarea>
+  <div class="info" id="postinfo"></div>
+  <div class="row">
+    <button id="postcopy" class="sub">投稿文をコピー</button>
   </div>
 </div>
 <script>
 "use strict";
-const screen=document.getElementById('screen');
-const cartName=document.getElementById('cartName');
-const cartSel=document.getElementById('cart');
-const customRow=document.getElementById('customRow');
-const urlBox=document.getElementById('urlBox');
-const toast=document.getElementById('toast');
-const DEFAULT_GAME="https://oosawak.github.io/ikkiuchi/";
-const DEFAULT_TITLE="一騎討ち ― 刹那の一閃";
-let current={type:"url",value:DEFAULT_GAME,title:DEFAULT_TITLE};
+const PLAYER = "https://oosawak.github.io/html-player/";
+const frame = document.getElementById("frame");
+const cart = document.getElementById("cart");
+const custom = document.getElementById("custom");
+let currentGame = "";
 
-function say(t){toast.textContent=t;setTimeout(()=>{if(toast.textContent===t)toast.textContent="";},2600);}
-function loadURL(url,title){
-  current={type:"url",value:url,title:title||url};
-  screen.removeAttribute('srcdoc');
-  screen.src=url;
-  cartName.textContent="カートリッジ: "+current.title;
+function load(url){ currentGame = url; frame.removeAttribute("srcdoc"); frame.src = url; }
+function loadPayload(b64){
+  const bin = atob(b64.replace(/-/g,"+").replace(/_/g,"/"));
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip")))
+    .text().then(html => { currentGame = ""; frame.srcdoc = html; })
+    .catch(()=>{ document.getElementById("mkinfo").textContent = "ペイロードの解凍に失敗しました。"; });
 }
-async function loadPayload(b64){
-  try{
-    const bin=atob(b64.replaceAll('-','+').replaceAll('_','/'));
-    const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    const html=await new Response(stream).text();
-    current={type:"payload",value:b64,title:"URL埋め込みカートリッジ"};
-    screen.removeAttribute('src');
-    screen.srcdoc=html;
-    cartName.textContent="カートリッジ: URL埋め込みカートリッジ";
-  }catch(e){say("ペイロードを読み込めませんでした");loadURL(DEFAULT_GAME,DEFAULT_TITLE);}
+function selectCartridge(url){
+  for(const o of cart.options){ if(o.value === url){ cart.value = url; custom.style.display = "none"; return; } }
+  cart.value = "__custom"; custom.style.display = ""; custom.value = url;
 }
 function init(){
-  const q=new URLSearchParams(location.search);
-  if(location.hash.startsWith("#p=")){loadPayload(location.hash.slice(3));return;}
-  const g=q.get("game");
-  if(g){loadURL(g,q.get("title")||g);
-    for(const o of cartSel.options){if(o.value===g)cartSel.value=g;}
-    return;
-  }
-  loadURL(DEFAULT_GAME,DEFAULT_TITLE);
+  const q = new URLSearchParams(location.search);
+  const g = q.get("game");
+  const m = location.hash.match(/#p=([A-Za-z0-9\-_]+)/);
+  if(m){ loadPayload(m[1]); cart.value = "__custom"; custom.style.display = ""; return; }
+  const url = g || cart.options[0].value;
+  selectCartridge(url); load(url);
 }
-cartSel.addEventListener('change',()=>{
-  if(cartSel.value==="custom"){customRow.style.display="flex";urlBox.focus();}
-  else{customRow.style.display="none";loadURL(cartSel.value,cartSel.options[cartSel.selectedIndex].textContent);}
+cart.addEventListener("change", () => {
+  if(cart.value === "__custom"){ custom.style.display=""; custom.focus(); }
+  else { custom.style.display="none"; load(cart.value); }
 });
-document.getElementById('loadBtn').addEventListener('click',()=>{
-  const u=urlBox.value.trim();if(!u)return;
-  loadURL(u,u);say("カートリッジを差し替えました");
-});
-document.getElementById('reload').addEventListener('click',()=>{
-  if(current.type==="payload"){const h=screen.srcdoc;screen.srcdoc=h;}
-  else{screen.src=current.value;}
-});
-document.getElementById('full').addEventListener('click',()=>{
-  const st=document.getElementById('stage');
-  if(st.requestFullscreen)st.requestFullscreen();
-});
-document.getElementById('share').addEventListener('click',async()=>{
-  let url;
-  if(current.type==="payload"){url=location.origin+location.pathname+"#p="+current.value;}
-  else{url=location.origin+location.pathname+"?game="+encodeURIComponent(current.value);}
-  try{await navigator.clipboard.writeText(url);say("共有URLをコピーしました");}
-  catch(e){urlBox.value=url;customRow.style.display="flex";say("コピーできませんでした。欄のURLを使ってください");}
-});
+custom.addEventListener("change", () => { if(custom.value.trim()) load(custom.value.trim()); });
+document.getElementById("reload").onclick = () => { if(currentGame) load(currentGame); else location.reload(); };
+document.getElementById("full").onclick = () => { const st = document.getElementById("stage"); if(st.requestFullscreen) st.requestFullscreen(); };
+document.getElementById("share").onclick = async () => {
+  const hash = location.hash;
+  const url = hash.startsWith("#p=") ? PLAYER + hash : PLAYER + "?game=" + encodeURIComponent(currentGame || "");
+  try { await navigator.clipboard.writeText(url); alert("共有URLをコピーしました"); }
+  catch(e){ prompt("共有URL", url); }
+};
+
+/* ---- URL maker ---- */
+async function gzipBase64Url(text){
+  const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
+  const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+  let bin = "";
+  for(let i=0;i<buf.length;i+=0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i+0x8000));
+  return { b64: btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""), gz: buf.length };
+}
+function postTemplate(title, url){
+  return "このURL自体が、ゲームです。\n\n" + title + "\n\n開けば即プレイ。ファイルなし、URLだけで遊べます。\n\n" + url;
+}
+function countPost(text){
+  const urlCount = (text.match(/https?:\/\/\S+/g) || []).length * 23;
+  const noUrl = text.replace(/https?:\/\/\S+/g, "");
+  let w = urlCount;
+  for(const ch of noUrl) w += (ch.charCodeAt(0) > 0xFF ? 2 : 1);
+  return w;
+}
+function updatePostInfo(){
+  const t = document.getElementById("posttext").value;
+  const w = countPost(t);
+  document.getElementById("postinfo").textContent = t ? ("X換算 " + w + " / 280" + (w <= 280 ? "（投稿できます）" : "（オーバーしています）")) : "";
+}
+async function makeFrom(html){
+  const info = document.getElementById("mkinfo");
+  if(!html || !html.trim()){ info.textContent = "HTMLが空です。"; return; }
+  info.textContent = "圧縮しています……";
+  try {
+    const { b64, gz } = await gzipBase64Url(html);
+    const url = PLAYER + "#p=" + b64;
+    const total = url.length;
+    document.getElementById("mkout").value = url;
+    const open = document.getElementById("mkopen"); open.href = url; open.style.display = "";
+    info.textContent = "元 " + html.length + " 文字 → gzip " + gz + " バイト → URL " + total + " 文字" +
+      (total <= 4096 ? "（Xの4,096文字に収まります）" : "（Xの4,096文字を超えます。ブラウザで開く分には使えます）");
+    const tm = html.match(/<title>([^<]*)<\/title>/i);
+    document.getElementById("posttext").value = postTemplate(tm ? tm[1].trim() : "無題のゲーム", url);
+    updatePostInfo();
+  } catch(e){ info.textContent = "圧縮に失敗しました: " + e.message; }
+}
+document.getElementById("mktext").onclick = () => makeFrom(document.getElementById("mkhtml").value);
+document.getElementById("mkfetch").onclick = async () => {
+  const u = document.getElementById("mkurl").value.trim();
+  const info = document.getElementById("mkinfo");
+  if(!u){ info.textContent = "URLを入れてください。"; return; }
+  info.textContent = "読み込んでいます……";
+  try {
+    const res = await fetch(u);
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    makeFrom(await res.text());
+  } catch(e){
+    info.textContent = "読み込めませんでした（相手サイトの制限の可能性があります）。HTMLを貼り付けて作ってください。";
+  }
+};
+document.getElementById("mkcopy").onclick = async () => {
+  const v = document.getElementById("mkout").value;
+  if(!v) return;
+  try { await navigator.clipboard.writeText(v); alert("URLをコピーしました"); } catch(e){ document.getElementById("mkout").select(); }
+};
+document.getElementById("posttext").addEventListener("input", updatePostInfo);
+document.getElementById("postcopy").onclick = async () => {
+  const v = document.getElementById("posttext").value;
+  if(!v) return;
+  try { await navigator.clipboard.writeText(v); alert("投稿文をコピーしました。Xに貼り付けて投稿してください"); } catch(e){ document.getElementById("posttext").select(); }
+};
 init();
 </script>
 </body>

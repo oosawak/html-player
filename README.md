@@ -47,4 +47,22 @@
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.2（カートリッジ3本収録）
+- バージョン: v0.3（カートリッジ3本収録、URL作成ツール付き）
+
+## URL作成ツール
+
+プレイヤーのページ内に「カートリッジのURLを作る」ツールがあります。
+
+- HTMLファイルのURLを入れると、中身を読み込んで埋め込みURL（#p=）を作ります（読み込みは相手サイトの許可範囲内。GitHub Pages などでは動作します）
+- HTMLを直接貼り付けても作れます
+- 圧縮はブラウザ標準の CompressionStream（gzip）で行い、サーバーには送りません
+- URLを作ると、Xへの投稿文のたたき台（タイトル入り）が自動で入り、文字数（X換算）も表示されます。コピーしてそのまま投稿できます
+
+### シェルスクリプト版
+
+`tools/make-url.sh` ― 引数にHTMLファイルのパス、またはそのURLを渡すと、埋め込みURLを標準出力に出します（要: curl / python3）。
+
+```
+tools/make-url.sh game.html
+tools/make-url.sh https://example.github.io/game/
+```
