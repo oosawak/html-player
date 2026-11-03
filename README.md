@@ -35,7 +35,8 @@
 | DUNGEON//LOAD | Rust/WASMのダンジョン（外部ファイル・CDN併用の大型例、URL指定） | https://oosawak.github.io/rustgames/play/dungeonload/index.html |
 | モンスターあわせ | アイコン神経衰弱。RPG Awesomeをプレイヤー供給で使い、埋め込みでもアイコンが出る例 | https://oosawak.github.io/monster-awase/ |
 | モンスターハント | アイコン射撃場。タップと十字キー＋A/Bの両対応で、コントローラーの実験も兼ねる | https://oosawak.github.io/monster-hunt/ |
-| スターブレイカー | 宇宙シューティング。自機を自由に動かし、エネルギー管理をしながら敵を撃つ | https://oosawak.github.io/html-player/games/star-breaker/ |
+| スターブレイカー | 全方位シューティング。敵が360度から寄ってきて、ショットは自動で一番近い敵を追尾する | https://oosawak.github.io/html-player/games/star-breaker/ |
+| リングバースト | 攻撃は自分の周りに広がる円だけ。ゲージが溜まったらタップで発動する | https://oosawak.github.io/html-player/games/ring-burst/ |
 
 ## カートリッジの配り方（2形式）
 
@@ -67,7 +68,7 @@
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.12（カートリッジ8本収録、URL作成ツール、画面コントローラー、標準フォント付き）
+- バージョン: v0.13（カートリッジ9本収録、URL作成ツール、画面コントローラー、標準フォント付き）
 
 ## URL作成ツール
 
