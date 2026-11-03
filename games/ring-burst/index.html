@@ -54,12 +54,14 @@ HP.loop(dt=>{
   playT+=dt;
   gauge=Math.min(100,gauge+22*dt);
   fireWait-=dt;
-  if(fireWait<=0&&foes.length){
-   let tgt=null,bd=1e9;
+  if(fireWait<=0){
+   let tgt=null,bd=40000;
    for(const f of foes){const dd=(f.x-ship.x)**2+(f.y-ship.y)**2;if(dd<bd){bd=dd;tgt=f}}
-   const a=Math.atan2(tgt.y-ship.y,tgt.x-ship.x);
-   bullets.push({x:ship.x,y:ship.y,vx:Math.cos(a)*300,vy:Math.sin(a)*300,tgt:tgt,life:1.3});
-   fireWait=0.3;
+   if(tgt){
+    const a=Math.atan2(tgt.y-ship.y,tgt.x-ship.x);
+    bullets.push({x:ship.x,y:ship.y,vx:Math.cos(a)*300,vy:Math.sin(a)*300,tgt:tgt,life:0.75});
+    fireWait=0.3;
+   }
   }
   let mx=0,my=0;
   if(HP.left())mx-=1;

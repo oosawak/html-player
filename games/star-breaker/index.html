@@ -69,11 +69,11 @@ HP.loop(dt=>{
   ship.y=Math.max(30,Math.min(H-14,ship.y));
   fireWait-=dt;
   if(fireWait<=0&&foes.length&&energy>=3){
-   let tgt=null,bd=1e9;
+   let tgt=null,bd=40000;
    for(const f of foes){const dd=(f.x-ship.x)**2+(f.y-ship.y)**2;if(dd<bd){bd=dd;tgt=f}}
    if(tgt){
     const a=Math.atan2(tgt.y-ship.y,tgt.x-ship.x);
-    bullets.push({x:ship.x,y:ship.y,vx:Math.cos(a)*300,vy:Math.sin(a)*300,tgt:tgt,life:1.4});
+    bullets.push({x:ship.x,y:ship.y,vx:Math.cos(a)*300,vy:Math.sin(a)*300,tgt:tgt,life:0.8});
     energy-=3;fireWait=0.25;HP.beep(880,0.05);
    }
   }
