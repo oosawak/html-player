@@ -32,8 +32,41 @@
 
 - 標準フォント5種（HP Serif／HP Sans／HP Round／HP Mono／HP Dot）
 - アイコンフォント RPG Awesome（モンスターや武器のアイコン）
-- hp.js（2D向けの共通部品: 入力・ゲームループ・効果音）
+- hp.js（2D向けの共通ライブラリー。下記）
 - three.js（3D向けライブラリ、r128）
+
+## 共通ライブラリー hp.js の使い方
+
+2Dゲーム向けの小さな共通ライブラリーです。入力（十字キー／A／Bボタン）、ゲームループ、効果音をまとめています。カートリッジのHTMLから読み込むだけで使えます。
+
+```html
+<script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
+```
+
+| 書き方 | 意味 |
+|---|---|
+| `HP.loop(function(dt){ ... })` | ゲームループを始める。dt は前フレームからの秒数 |
+| `HP.left()` / `HP.right()` / `HP.up()` / `HP.down()` | 十字キーが押されている間 true |
+| `HP.a()` / `HP.b()` | Aボタン（Space）／Bボタン（KeyX）が押されている間 true |
+| `HP.aHit()` / `HP.bHit()` | 押した瞬間だけ true（タイトル画面の決定などに） |
+| `HP.beep(freq, dur, type, vol)` | 効果音を鳴らす。freq=周波数、dur=長さ（秒）、type=波形（省略時 square）、vol=音量（省略時 0.04） |
+| `HP.keys` | 押されているキーの一覧（キーコードを名前として持つオブジェクト） |
+
+使用例（十字キーでキャラクターを動かす）:
+
+```js
+let x = 100, y = 100;
+HP.loop(function(dt){
+  if (HP.left())  x -= 200 * dt;
+  if (HP.right()) x += 200 * dt;
+  if (HP.up())    y -= 200 * dt;
+  if (HP.down())  y += 200 * dt;
+  if (HP.aHit())  HP.beep(880, 0.08);
+  // ここで x, y にキャラクターを描く
+});
+```
+
+キーボードで直接遊ぶ場合も、プレイヤーの画面コントローラーで遊ぶ場合も、同じ書き方で動きます（コントローラーはキー入力としてゲームに届くため）。
 
 ## 収録カートリッジ
 
@@ -79,7 +112,7 @@
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.14（カートリッジ9本収録、URL作成ツール、画面コントローラー、標準フォント付き）
+- バージョン: v0.15（カートリッジ9本収録、URL作成ツール、画面コントローラー、標準フォント付き）
 
 ## URL作成ツール
 
