@@ -10,6 +10,7 @@ addEventListener("keydown",function(e){
   if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].indexOf(e.code)>=0)e.preventDefault();
 });
 addEventListener("keyup",function(e){keys[e.code]=false});
+setInterval(function(){try{parent.postMessage({t:"hp-alive"},"*")}catch(e){}},500);
 var HP={
   keys:keys,
   left:function(){return !!keys.ArrowLeft},

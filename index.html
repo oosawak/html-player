@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' https://oosawak.github.io; style-src 'unsafe-inline' https://oosawak.github.io; img-src data: blob: https://oosawak.github.io; font-src data: https://oosawak.github.io; media-src data: blob: https://oosawak.github.io; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-src 'self' https:">
 <title>HTMLプレイヤー ― URLで配れるカートリッジ</title>
 <style>
   body { margin:0; background:#1a1210; color:#f3e9d2; font-family: Georgia, "Hiragino Mincho ProN", serif; }
@@ -35,7 +36,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.17</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.18</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -55,13 +56,16 @@
     <input type="url" id="custom" placeholder="ゲームのURLを貼り付け" style="display:none">
   </div>
   <p class="note">名前の後ろの（共通Lib）は、共通ライブラリー（hp.js）を使っているゲームの印です。</p>
+  <p class="note">内蔵カートリッジと、埋め込みURL（#p=）のゲームは、隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。URL指定の大きなタイトルは、それぞれのサイトをそのまま表示しています。</p>
   <div id="stage"><iframe id="frame" title="cartridge stage"
-    sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-modals"></iframe></div>
+    sandbox="allow-scripts allow-pointer-lock"></iframe></div>
+  <div class="info" id="wdmsg"></div>
   <div class="row">
     <button id="reload">リロード</button>
     <button id="full">フルスクリーン</button>
     <button id="share" class="sub">共有URLをコピー</button>
     <button id="padbtn" class="sub">コントローラー</button>
+    <button id="watchbtn" class="sub">暴走検知 オン</button>
   </div>
   <div id="pad">
     <div class="cluster">
@@ -119,9 +123,16 @@ const frame = document.getElementById("frame");
 const cart = document.getElementById("cart");
 const custom = document.getElementById("custom");
 let currentGame = "";
+let strictNow = true, wdArmed = false, wdLast = 0;
+let watchOn = true;
+try { watchOn = localStorage.getItem("hpwatch") !== "0"; } catch(e){}
 
-function load(url){ currentGame = url; frame.removeAttribute("srcdoc"); frame.src = url; }
+const STRICT = "allow-scripts allow-pointer-lock";
+const LOOSE = "allow-scripts allow-same-origin allow-pointer-lock allow-modals";
+function load(url){ currentGame = url; strictNow = url.startsWith("games/"); wdArmed = false; document.getElementById("wdmsg").textContent = ""; frame.setAttribute("sandbox", strictNow ? STRICT : LOOSE); frame.removeAttribute("srcdoc"); frame.src = url; }
 function loadPayload(b64){
+  strictNow = true; wdArmed = false; document.getElementById("wdmsg").textContent = "";
+  frame.setAttribute("sandbox", STRICT);
   const bin = atob(b64.replace(/-/g,"+").replace(/_/g,"/"));
   const bytes = new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
@@ -220,26 +231,6 @@ document.getElementById("postcopy").onclick = async () => {
   if(!v) return;
   try { await navigator.clipboard.writeText(v); alert("投稿文をコピーしました。Xに貼り付けて投稿してください"); } catch(e){ document.getElementById("posttext").select(); }
 };
-/* ---- standard fonts (injected into same-origin cartridges) ---- */
-const FONT_CSS = [
- '@font-face{font-family:"HP Serif";src:local("Hiragino Mincho ProN"),local("Hiragino Mincho Pro"),local("Yu Mincho"),local("YuMincho"),local("Noto Serif JP"),local("MS PMincho")}',
- '@font-face{font-family:"HP Sans";src:local("Hiragino Kaku Gothic ProN"),local("Hiragino Sans"),local("Yu Gothic"),local("YuGothic"),local("Noto Sans JP"),local("Meiryo")}',
- '@font-face{font-family:"HP Round";src:local("Hiragino Maru Gothic ProN"),local("M PLUS Rounded 1c"),local("Yu Gothic"),local("Noto Sans JP")}',
- '@font-face{font-family:"HP Mono";src:local("SF Mono"),local("Menlo"),local("Consolas"),local("Noto Sans Mono"),local("MS Gothic")}',
- '@font-face{font-family:"HP Dot";src:local("DotGothic16"),local("PixelMplus10"),local("PixelMplus12"),local("M PLUS Rounded 1c")}',
- '@font-face{font-family:"HP Denki";src:url("https://oosawak.github.io/html-player/assets/denki-chip/x8y12pxDenkiChip.woff2") format("woff2")}'
-].join("\n");
-frame.addEventListener("load", () => {
-  try {
-    const d = frame.contentDocument; if(!d || !d.head) return;
-    const s = d.createElement("style"); s.textContent = FONT_CSS;
-    d.head.appendChild(s);
-    const l = d.createElement("link"); l.rel = "stylesheet";
-    l.href = "https://oosawak.github.io/html-player/assets/rpg-awesome/css/rpg-awesome.min.css";
-    d.head.appendChild(l);
-  } catch(e){}
-});
-
 /* ---- controller ---- */
 function keyName(code){ return code === "Space" ? " " : code === "KeyX" ? "x" : code; }
 function sendKey(code, down){
@@ -260,6 +251,26 @@ document.querySelectorAll(".pbtn").forEach(b => {
   b.addEventListener("contextmenu", e => e.preventDefault());
 });
 document.getElementById("padbtn").onclick = () => { document.getElementById("pad").classList.toggle("on"); };
+
+/* ---- runaway watchdog (hp.js heartbeat) ---- */
+const watchbtn = document.getElementById("watchbtn");
+function drawWatch(){ watchbtn.textContent = watchOn ? "暴走検知 オン" : "暴走検知 オフ"; }
+watchbtn.onclick = () => { watchOn = !watchOn; try { localStorage.setItem("hpwatch", watchOn ? "1" : "0"); } catch(e){} drawWatch(); };
+drawWatch();
+addEventListener("message", e => {
+  if(e.data && e.data.t === "hp-alive" && e.source === frame.contentWindow){ wdLast = Date.now(); wdArmed = true; }
+});
+let wdTick = Date.now();
+setInterval(() => {
+  const now = Date.now(); const gap = now - wdTick; wdTick = now;
+  if(gap > 10000){ wdLast = now; return; }
+  if(!watchOn || !strictNow || !wdArmed) return;
+  if(now - wdLast > 4000){
+    wdArmed = false;
+    frame.removeAttribute("srcdoc"); frame.src = "about:blank";
+    document.getElementById("wdmsg").textContent = "カートリッジの応答が止まったため、停止しました（暴走検知）。リロードで再開できます。";
+  }
+}, 1000);
 
 init();
 </script>

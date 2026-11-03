@@ -12,10 +12,13 @@
 
 ## 必須の約束
 
-1. **HTMLファイル1枚で完結すること。** 外部の画像・スクリプト・フォントに依存しない（埋め込み形式では外部ファイルは読み込まれません）。画像は Canvas 描画か、data URI か、絵文字・文字で表現する。
+1. **HTMLファイル1枚で完結すること。** 外部の画像・スクリプト・フォントに依存しない。例外はプレイヤーが供給する共通部品（標準フォント／RPG Awesome／hp.js）だけで、絶対URLで読み込む。画像は Canvas 描画か、絵文字・文字で表現する（data URI の画像は使えない）。
 2. **単体で開いてもそのまま遊べること。** プレイヤー専用の初期化は不要な形にする。
-3. **通信を前提にしないこと。** 外部サーバーへの fetch や WebSocket がなくても遊べること。記録の保存は localStorage を使う。
+3. **通信はできません。** プレイヤーの中では、外部への通信（fetch、WebSocket、外部画像の読み込みなど）は仕組みで止められています。記録の保存に localStorage は使えますが、プレイヤーの中では保存は残りません（開いている間だけ有効）。必ず try/catch で囲み、保存できなくてもそのまま遊べるようにすること。
 4. **`<meta name="viewport" content="width=device-width, initial-scale=1">` を入れること。** スマホで崩れないこと。画面は縦持ち・横持ちどちらでも遊べるのが理想。
+5. **CSPの行を `<head>` に入れること（必須）。** 単体で開いたときにも、通信とフォーム送信を止めるための行です。
+   `<meta http-equiv="Content-Security-Policy" content="default-src https://oosawak.github.io 'unsafe-inline'; connect-src 'none'; form-action 'none'">`
+6. **フォームと入力要素は使わないこと。** `<form>`、`<input>`、`<textarea>`、`<select>` は禁止です。ゲームの操作は Canvas とボタン（div 等）で作ってください。プレイヤーの中では、警告ダイアログ（alert 等）も出ません。
 
 ## 画面
 
@@ -26,7 +29,11 @@
 
 ## フォント
 
-ゲームごとに、決められた名前のフォントを指定できます。プレイヤーが読み込んだカートリッジ（同じ場所に置かれたものと、埋め込み形式のもの）には、プレイヤー側からフォント定義が自動で入ります。ゲーム側は CSS で名前を書くだけです。
+ゲームごとに、決められた名前のフォントを指定できます。フォント定義はプレイヤー側の CSS ファイルにまとめてあり、ゲーム側は `<head>` に次の1行を入れて読み込み、CSS で名前を書きます（単体で開いた場合も、そのまま効きます）。
+
+```html
+<link rel="stylesheet" href="https://oosawak.github.io/html-player/assets/fonts.css">
+```
 
 | 名前 | 雰囲気 | 向いているゲーム | 使い方の例 |
 |---|---|---|---|
@@ -44,7 +51,7 @@
 - HP Denki を画面の文字（DOM）で使うときは、12pxの倍数（12px／24px）にするとドットの縁がぼやけません。
 - HP Denki だけは実体もプレイヤー側が持ちます（ピクセルフォント「でんきチップ」、作者: 患者長ひっく氏、SIL Open Font License 1.1）。JIS第1水準の漢字まで入っているので、漢字の文章でもドット字形になります。
 - 必ず後ろに一般名（serif / sans-serif / monospace）を続けて書いてください。定義が入らない環境でも表示が崩れません。
-- 単体で開く場合にも同じ名前を使いたいときは、プレイヤーのリポジトリ（index.html 内の FONT_CSS）の @font-face 定義を、そのまま自分のHTMLに貼ってください。
+- フォント定義の実体は `assets/fonts.css` です。中身を確認したい場合はそのファイルを見てください。
 
 ### 飾りフォントについて
 
@@ -58,9 +65,10 @@ RPG風などの飾りフォントは、FontSpace の RPG カテゴリ（https://
 モンスターや武器などの絵を「文字」として出すアイコンフォントもあります。
 
 **プレイヤー標準: RPG Awesome**
-プレイヤー側に RPG Awesome（モンスターや武器など約290KBのフォント＋CSS）を置いてあり、カートリッジへ自動で読み込まれます。ゲーム側はクラス名を書くだけで、**フォント分のサイズを使わずに**使えます。URL埋め込み（#p=）のゲームでも使えます。
+プレイヤー側に RPG Awesome（モンスターや武器など約290KBのフォント＋CSS）を置いてあります。ゲーム側は `<head>` で CSS を読み込んで、クラス名を書くだけで、**フォント分のサイズを使わずに**使えます。URL埋め込み（#p=）のゲームでも使えます。
 
 ```html
+<link rel="stylesheet" href="https://oosawak.github.io/html-player/assets/rpg-awesome/css/rpg-awesome.min.css">
 <i class="ra ra-dragon"></i>
 ```
 
@@ -102,7 +110,7 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 ### hp.js（2D向けの小さな共通部品）
 
 ```html
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=2"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=3"></script>
 ```
 
 - `HP.loop(function(dt){ ... })` — ゲームループ。dt は前フレームからの秒数
@@ -114,6 +122,7 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 - `HP.panel(g, x, y, w, h, fill, stroke)` — パネルを描く（UI部品）
 - `HP.title(g, W, H, title, lines, color)` — タイトル画面を描く（UI部品）
 - `HP.beep(freq, dur, type, vol)` — 簡単な効果音（WebAudio）
+- hp.js は読み込まれている間、プレイヤーへ生存信号を送ります。ゲームの処理が止まって信号が途絶えると、プレイヤーの暴走検知がカートリッジを停止します（プレイヤー側でオフにできます）
 
 ### three.js（3D向け）
 
@@ -153,7 +162,8 @@ r128 の three.min.js をプレイヤー側に置いてあります。
 - 一人麻雀（タップ操作）: games/hitori-mahjong/
 - 上海 ― 牌消し（タップ操作）: games/shanghai/
 - モンスターあわせ（RPG Awesomeのアイコン使用）: games/monster-awase/
-- スターブレイカー（hp.js使用、全方位シューティング＋自動追尾弾）: games/star-breaker/
+- モンスターハント（RPG Awesomeのアイコン使用）: games/monster-hunt/
+- スターブレイカー（hp.js使用、縦スクロールシューティング）: games/star-breaker/
 - リングバースト（hp.js使用、自動追尾弾＋円形バースト）: games/ring-burst/
 
 ## ライセンス

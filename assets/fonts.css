@@ -1,0 +1,7 @@
+/* HTMLプレイヤー標準フォント ― カートリッジが <link> で読み込む（CARTRIDGE.md 参照） */
+@font-face{font-family:"HP Serif";src:local("Hiragino Mincho ProN"),local("Hiragino Mincho Pro"),local("Yu Mincho"),local("YuMincho"),local("Noto Serif JP"),local("MS PMincho")}
+@font-face{font-family:"HP Sans";src:local("Hiragino Kaku Gothic ProN"),local("Hiragino Sans"),local("Yu Gothic"),local("YuGothic"),local("Noto Sans JP"),local("Meiryo")}
+@font-face{font-family:"HP Round";src:local("Hiragino Maru Gothic ProN"),local("M PLUS Rounded 1c"),local("Yu Gothic"),local("Noto Sans JP")}
+@font-face{font-family:"HP Mono";src:local("SF Mono"),local("Menlo"),local("Consolas"),local("Noto Sans Mono"),local("MS Gothic")}
+@font-face{font-family:"HP Dot";src:local("DotGothic16"),local("PixelMplus10"),local("PixelMplus12"),local("M PLUS Rounded 1c")}
+@font-face{font-family:"HP Denki";src:url("https://oosawak.github.io/html-player/assets/denki-chip/x8y12pxDenkiChip.woff2") format("woff2")}
