@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>エナジーディフェンダー ― 宇宙シューティング</title>
+<title>スターブレイカー ― 宇宙シューティング</title>
 <script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
 <style>
 body{margin:0;background:#05070f;color:#dfe9ff;font-family:"HP Sans",sans-serif;text-align:center;-webkit-tap-highlight-color:transparent}
@@ -12,7 +12,7 @@ canvas{width:100%;background:#02030a;border:1px solid #39558a;border-radius:6px;
 button.act{font-size:15px;padding:10px 26px;background:#7c2128;color:#fff;border:1px solid #d8b46a;border-radius:6px;letter-spacing:.12em;cursor:pointer}
 .note{font-size:11px;color:#8498bd;line-height:1.7;text-align:left}
 </style></head><body><div id="w">
-<h1>エナジーディフェンダー</h1>
+<h1>スターブレイカー</h1>
 <div class="s">自機を動かして敵を撃つ宇宙シューティング。撃つとエネルギーを消費する。</div>
 <canvas id="cv" width="480" height="360"></canvas>
 <button class="act" id="go">スタート（Bボタン）</button>
@@ -22,7 +22,7 @@ button.act{font-size:15px;padding:10px 26px;background:#7c2128;color:#fff;border
 const cv=document.getElementById("cv"),g=cv.getContext("2d");
 const W=480,H=360;
 let state=0,score=0,best=0,energy=100,lastShot=-9,fireWait=0,invuln=0,spawnT=0,planetT=3,t=0;
-try{best=+localStorage.getItem("ed")||0}catch(e){}
+try{best=+localStorage.getItem("sb")||0}catch(e){}
 const ship={x:W/2,y:H-46};
 let bullets=[],foes=[],planets=[],stars=[];
 for(let i=0;i<44;i++)stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.4+0.3});
@@ -93,7 +93,7 @@ HP.loop(dt=>{
   for(const p of planets){
    if(invuln<=0&&Math.hypot(ship.x-p.x,ship.y-p.y)<p.r+10){energy-=25;invuln=1.2;HP.beep(70,0.3,"sawtooth",0.05);break}
   }
-  if(energy<=0){energy=0;state=2;if(score>best){best=score;try{localStorage.setItem("ed",best)}catch(e){}}}
+  if(energy<=0){energy=0;state=2;if(score>best){best=score;try{localStorage.setItem("sb",best)}catch(e){}}}
  }
  planets.forEach(p=>{circle(p.x,p.y,p.r,"#c96a1e");circle(p.x-p.r*0.3,p.y-p.r*0.2,p.r*0.62,"#e08a3c")});
  foes.forEach(f=>circle(f.x,f.y,f.r,f.col));
@@ -111,7 +111,7 @@ HP.loop(dt=>{
  g.fillStyle=energy>30?"#57e08a":"#e05252";g.fillRect(76,26,180*energy/100,10);
  if(state===0){
   g.fillStyle="#dfe9ff";g.textAlign="center";
-  g.font='700 25px "HP Sans",sans-serif';g.fillText("ENERGY DEFENDER",W/2,150);
+  g.font='700 25px "HP Sans",sans-serif';g.fillText("STAR BREAKER",W/2,150);
   g.font='13px "HP Sans",sans-serif';
   g.fillText("十字キーで移動、A長押しでショット",W/2,182);
   g.fillText("エネルギーが尽きたらミッション失敗",W/2,204);
