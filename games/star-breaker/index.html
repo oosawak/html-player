@@ -4,7 +4,7 @@
 <title>スターブレイカー ― 宇宙シューティング</title>
 <script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
 <style>
-body{margin:0;background:#05070f;color:#dfe9ff;font-family:"HP Sans",sans-serif;text-align:center}
+body{margin:0;background:#05070f;color:#dfe9ff;font-family:"HP Denki",sans-serif;text-align:center}
 #w{max-width:480px;margin:auto;padding:10px}
 h1{font-size:19px;margin:4px}
 canvas{width:100%;background:#02030a;border:1px solid #39558a;border-radius:6px;touch-action:none;display:block;margin:8px auto}
@@ -106,7 +106,7 @@ if(state!==2&&!(invuln>0&&((t*10)|0)%2)){
 g.fillStyle="#57b7ff";
 g.beginPath();g.moveTo(ship.x,ship.y-15);g.lineTo(ship.x-11,ship.y+11);g.lineTo(ship.x,ship.y+5);g.lineTo(ship.x+11,ship.y+11);g.closePath();g.fill();
 }
-g.font='13px "HP Mono",monospace';g.fillStyle="#dfe9ff";g.textAlign="left";
+g.font='14px "HP Denki",sans-serif';g.fillStyle="#dfe9ff";g.textAlign="left";
 g.fillText("SCORE "+score,10,18);
 g.textAlign="right";g.fillText("HI "+best,W-10,18);g.textAlign="left";
 g.fillText("ENERGY",10,36);
@@ -114,8 +114,8 @@ g.fillStyle="#2a3c5f";g.fillRect(76,26,180,10);
 g.fillStyle=energy>30?"#57e08a":"#e05252";g.fillRect(76,26,180*energy/100,10);
 if(state===0){
 g.fillStyle="#dfe9ff";g.textAlign="center";
-g.font='700 25px "HP Sans",sans-serif';g.fillText("STAR BREAKER",W/2,150);
-g.font='13px "HP Sans",sans-serif';
+g.font='26px "HP Denki",sans-serif';g.fillText("STAR BREAKER",W/2,150);
+g.font='14px "HP Denki",sans-serif';
 g.fillText("十字キーで移動、A長押しでショット",W/2,182);
 g.fillText("エネルギーが尽きたらミッション失敗",W/2,204);
 g.fillText("Bボタンかタップでスタート",W/2,238);
@@ -123,9 +123,9 @@ g.textAlign="left";
 }
 if(state===2){
 g.fillStyle="#dfe9ff";g.textAlign="center";
-g.font='700 24px "HP Sans",sans-serif';g.fillText("SIGNAL LOST",W/2,158);
-g.font='15px "HP Sans",sans-serif';g.fillText("MISSION FAILED ― SCORE "+score,W/2,190);
-g.font='13px "HP Sans",sans-serif';g.fillText("Bボタンかタップでもう一度",W/2,222);
+g.font='26px "HP Denki",sans-serif';g.fillText("SIGNAL LOST",W/2,158);
+g.font='16px "HP Denki",sans-serif';g.fillText("MISSION FAILED ― SCORE "+score,W/2,190);
+g.font='14px "HP Denki",sans-serif';g.fillText("Bボタンかタップでもう一度",W/2,222);
 g.textAlign="left";
 }
 });
