@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>エナジーディフェンダー ― 宇宙シューティング</title>
+<style>
+body{margin:0;background:#05070f;color:#dfe9ff;font-family:"HP Sans",sans-serif;text-align:center;-webkit-tap-highlight-color:transparent}
+#w{max-width:480px;margin:auto;padding:10px}
+h1{font-size:19px;letter-spacing:.14em;margin:4px}
+.s{font-size:12px;color:#8fa5cc}
+canvas{width:100%;background:#02030a;border:1px solid #39558a;border-radius:6px;touch-action:none;display:block;margin:8px auto}
+button.act{font-size:15px;padding:10px 26px;background:#7c2128;color:#fff;border:1px solid #d8b46a;border-radius:6px;letter-spacing:.12em;cursor:pointer}
+.note{font-size:11px;color:#8498bd;line-height:1.7;text-align:left}
+</style></head><body><div id="w">
+<h1>エナジーディフェンダー</h1>
+<div class="s">自機を動かして敵を撃つ宇宙シューティング。撃つとエネルギーを消費する。</div>
+<canvas id="cv" width="480" height="360"></canvas>
+<button class="act" id="go">スタート（Bボタン）</button>
+<div class="note">・十字キー: 移動／Aボタン長押し: ショット／Bボタン: スタート<br>・タッチでも可（触れている間、自機が寄って自動で撃つ）<br>・敵や惑星に当たる、敵を下に通すとエネルギー減。0でミッション失敗</div>
+</div><script>
+"use strict";
+const cv=document.getElementById("cv"),g=cv.getContext("2d");
+const W=480,H=360;
+let state=0,score=0,best=0,energy=100,lastShot=-9,fireWait=0,invuln=0,spawnT=0,planetT=3,t=0;
+try{best=+localStorage.getItem("ed")||0}catch(e){}
+const ship={x:W/2,y:H-46};
+let bullets=[],foes=[],planets=[],stars=[];
+for(let i=0;i<44;i++)stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.4+0.3});
+const keys={};
+let touch=null;
+document.addEventListener("keydown",e=>{
+ keys[e.code]=true;
+ if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].includes(e.code))e.preventDefault();
+ if(e.code==="KeyX"&&state!==1)start();
+});
+document.addEventListener("keyup",e=>{keys[e.code]=false});
+function pos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+cv.addEventListener("pointerdown",e=>{touch=pos(e);if(state!==1)start()});
+cv.addEventListener("pointermove",e=>{if(touch)touch=pos(e)});
+addEventListener("pointerup",()=>touch=null);
+function start(){
+ state=1;score=0;energy=100;bullets=[];foes=[];planets=[];spawnT=0;planetT=3;invuln=0;
+ ship.x=W/2;ship.y=H-46;
+}
+document.getElementById("go").onclick=start;
+function circle(x,y,r,c){g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
+let prev=performance.now();
+function frame(now){
+ const dt=Math.min(0.05,(now-prev)/1000);prev=now;t+=dt;
+ g.fillStyle="#02030a";g.fillRect(0,0,W,H);
+ g.fillStyle="#aFC4ee";
+ stars.forEach(s=>{s.y+=s.s*(state===1?26:8)*dt;if(s.y>H){s.y=0;s.x=Math.random()*W}g.fillRect(s.x,s.y,2,2)});
+ if(state===1){
+  const sp=200*dt;
+  if(keys.ArrowLeft)ship.x-=sp;
+  if(keys.ArrowRight)ship.x+=sp;
+  if(keys.ArrowUp)ship.y-=sp;
+  if(keys.ArrowDown)ship.y+=sp;
+  if(touch){ship.x+=(touch.x-ship.x)*0.3;ship.y+=(touch.y-14-ship.y)*0.3}
+  ship.x=Math.max(14,Math.min(W-14,ship.x));
+  ship.y=Math.max(40,Math.min(H-14,ship.y));
+  fireWait-=dt;
+  if(((keys.Space||touch)&&fireWait<=0&&energy>=4)){
+   bullets.push({x:ship.x,y:ship.y-16});
+   energy-=4;lastShot=t;fireWait=0.13;
+  }
+  if(t-lastShot>0.6)energy=Math.min(100,energy+15*dt);
+  spawnT-=dt;
+  if(spawnT<=0){
+   const r=9+Math.random()*7;
+   foes.push({x:24+Math.random()*(W-48),y:-r,r:r,vy:34+Math.random()*44+score/300,ph:Math.random()*7,col:r<13?"#c06ae0":"#e05252"});
+   spawnT=Math.max(0.34,0.85-score/24000);
+  }
+  planetT-=dt;
+  if(planetT<=0){
+   planets.push({x:40+Math.random()*(W-80),y:-44,r:26+Math.random()*14,vy:17+Math.random()*10});
+   planetT=5+Math.random()*4;
+  }
+  if(invuln>0)invuln-=dt;
+ }
+ bullets.forEach(b=>b.y-=330*dt);
+ bullets=bullets.filter(b=>b.y>-8);
+ foes.forEach(f=>{f.y+=f.vy*dt;f.x+=Math.sin(t*2+f.ph)*14*dt});
+ planets.forEach(p=>p.y+=p.vy*dt);
+ planets=planets.filter(p=>p.y-p.r<H+8);
+ let dead=false;
+ foes=foes.filter(f=>{
+  for(const b of bullets){
+   if(!b.hit&&Math.hypot(b.x-f.x,b.y-f.y)<f.r+3){b.hit=true;score+=f.r<13?150:100;return false}
+  }
+  if(f.y-f.r>H){energy-=5;return false}
+  if(invuln<=0&&Math.hypot(ship.x-f.x,ship.y-f.y)<f.r+11){energy-=18;invuln=1;return false}
+  return true;
+ });
+ bullets=bullets.filter(b=>{
+  if(b.hit)return false;
+  for(const p of planets)if(Math.hypot(b.x-p.x,b.y-p.y)<p.r)return false;
+  return true;
+ });
+ if(state===1){
+  for(const p of planets){
+   if(invuln<=0&&Math.hypot(ship.x-p.x,ship.y-p.y)<p.r+10){energy-=25;invuln=1.2;break}
+  }
+  if(energy<=0){energy=0;state=2;if(score>best){best=score;try{localStorage.setItem("ed",best)}catch(e){}}}
+ }
+ planets.forEach(p=>{circle(p.x,p.y,p.r,"#c96a1e");circle(p.x-p.r*0.3,p.y-p.r*0.2,p.r*0.62,"#e08a3c")});
+ foes.forEach(f=>circle(f.x,f.y,f.r,f.col));
+ g.fillStyle="#ffe9a8";
+ bullets.forEach(b=>g.fillRect(b.x-2,b.y-6,4,9));
+ if(state!==2&&!(invuln>0&&((t*10)|0)%2)){
+  g.fillStyle="#57b7ff";
+  g.beginPath();g.moveTo(ship.x,ship.y-15);g.lineTo(ship.x-11,ship.y+11);g.lineTo(ship.x,ship.y+5);g.lineTo(ship.x+11,ship.y+11);g.closePath();g.fill();
+ }
+ g.font='13px "HP Mono",monospace';g.fillStyle="#dfe9ff";g.textAlign="left";
+ g.fillText("SCORE "+score,10,18);
+ g.textAlign="right";g.fillText("HI "+best,W-10,18);g.textAlign="left";
+ g.fillText("ENERGY",10,36);
+ g.fillStyle="#2a3c5f";g.fillRect(76,26,180,10);
+ g.fillStyle=energy>30?"#57e08a":"#e05252";g.fillRect(76,26,180*energy/100,10);
+ if(state===0){
+  g.fillStyle="#dfe9ff";g.textAlign="center";
+  g.font='700 25px "HP Sans",sans-serif';g.fillText("ENERGY DEFENDER",W/2,150);
+  g.font='13px "HP Sans",sans-serif';
+  g.fillText("十字キーで移動、A長押しでショット",W/2,182);
+  g.fillText("エネルギーが尽きたらミッション失敗",W/2,204);
+  g.fillText("Bボタンかタップでスタート",W/2,238);
+  g.textAlign="left";
+ }
+ if(state===2){
+  g.fillStyle="#dfe9ff";g.textAlign="center";
+  g.font='700 24px "HP Sans",sans-serif';g.fillText("SIGNAL LOST",W/2,158);
+  g.font='15px "HP Sans",sans-serif';g.fillText("MISSION FAILED ― SCORE "+score,W/2,190);
+  g.font='13px "HP Sans",sans-serif';g.fillText("Bボタンかタップでもう一度",W/2,222);
+  g.textAlign="left";
+ }
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script></body></html>
