@@ -40,7 +40,7 @@
 2Dゲーム向けの小さな共通ライブラリーです。入力（十字キー／A／Bボタン）、ゲームループ、効果音をまとめています。カートリッジのHTMLから読み込むだけで使えます。
 
 ```html
-<script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=2"></script>
 ```
 
 | 書き方 | 意味 |
