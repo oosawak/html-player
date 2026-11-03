@@ -28,13 +28,15 @@
 
 ゲームごとに、決められた名前のフォントを指定できます。プレイヤーが読み込んだカートリッジ（同じ場所に置かれたものと、埋め込み形式のもの）には、プレイヤー側からフォント定義が自動で入ります。ゲーム側は CSS で名前を書くだけです。
 
-| 名前 | 雰囲気 | 使い方の例 |
-|---|---|---|
-| HP Serif | 明朝（和風・文章もの） | `font-family: "HP Serif", serif` |
-| HP Sans | ゴシック（標準・UI） | `font-family: "HP Sans", sans-serif` |
-| HP Round | 丸ゴシック（柔らかい・可愛い） | `font-family: "HP Round", sans-serif` |
-| HP Mono | 等幅（数字・ログ・端末風） | `font-family: "HP Mono", monospace` |
-| HP Dot | ドット絵風（レトロゲーム） | `font-family: "HP Dot", sans-serif` |
+| 名前 | 雰囲気 | 向いているゲーム | 使い方の例 |
+|---|---|---|---|
+| HP Serif | 明朝 | 和風・時代もの、歴史もの、文章中心のゲーム（一騎討ちはこちら） | `font-family: "HP Serif", serif` |
+| HP Sans | ゴシック | パズル、ボード・牌もの、UI中心の現代的なゲーム（一人麻雀・上海はこちら） | `font-family: "HP Sans", sans-serif` |
+| HP Round | 丸ゴシック | 可愛い系、子供向け、ほのぼのした日常もの | `font-family: "HP Round", sans-serif` |
+| HP Mono | 等幅 | 数字を扱うゲーム、ログや端末が出るもの、シミュレーション、スコア表示 | `font-family: "HP Mono", monospace` |
+| HP Dot | ドット絵風 | レトロなアクションやRPG風、ドット絵のゲーム | `font-family: "HP Dot", sans-serif` |
+
+迷ったら、和風なら HP Serif、牌やパズルなら HP Sans、レトロなら HP Dot が目安です。
 
 - 実体は端末に入っているフォントです（プレイヤーの定義が、端末ごとに一番近いものを選びます）。端末によって字形は少し変わります。
 - HP Dot は、端末にドットフォント（DotGothic16 など）が入っている場合に効きます。入っていない端末では通常のゴシックで表示されます。
