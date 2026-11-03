@@ -23,12 +23,19 @@
   .info { font-size:13px; color:#e8d9ae; min-height: 20px; margin: 6px 0; white-space: pre-wrap; }
   a { color:#e8c87a; }
   #mkopen { display:none; }
+  #pad { display:none; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #pad.on { display:flex; }
+  .cluster { display:flex; gap:6px; align-items:center; }
+  .pbtn { width:52px; height:52px; border-radius:50%; font-size:19px; padding:0; background:#3a2a1a; }
+  .pbtn:active { background:#7c2128; }
+  .pbtn.ab { background:#7c2128; font-size:16px; }
+  .pbtn.ab:active { background:#a83232; }
 </style>
 </head>
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.3</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.4</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -47,11 +54,24 @@
     <button id="reload">リロード</button>
     <button id="full">フルスクリーン</button>
     <button id="share" class="sub">共有URLをコピー</button>
+    <button id="padbtn" class="sub">コントローラー</button>
+  </div>
+  <div id="pad">
+    <div class="cluster">
+      <button class="pbtn" data-code="ArrowLeft">◀</button>
+      <button class="pbtn" data-code="ArrowUp">▲</button>
+      <button class="pbtn" data-code="ArrowDown">▼</button>
+      <button class="pbtn" data-code="ArrowRight">▶</button>
+    </div>
+    <div class="cluster">
+      <button class="pbtn ab" data-code="KeyX">B</button>
+      <button class="pbtn ab" data-code="Space">A</button>
+    </div>
   </div>
   <p class="note">共有の形は2つあります。通常は <b>?game=ゲームのURL</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
 
   <h2>カートリッジのURLを作る</h2>
-  <p class="note">HTMLファイルがある場所のURLを入れると、その中身を圧縮して「URL埋め込み形式」のURLを作ります。読み込めないサイトの場合は、HTMLを直接貼り付けてください。（圧縮はブラウザ標準の機能で行います。サーバーには送りません）</p>
+  <p class="note">HTMLファイルがある場所のURLを入れると、その中身を圧縮して「URL埋め込み形式」のURLを作ります。読み込めないサイトの場合は、HTMLを直接貼り付けてください。（圧縮はブラウザ標準の機能で行います。サーバーには送りません）カートリッジの作り方の仕様書は <a href="https://github.com/oosawak/html-player/blob/main/CARTRIDGE.md" target="_blank" rel="noopener">CARTRIDGE.md</a>（AIに読ませて作らせるためのものです）。</p>
   <div class="row">
     <input type="url" id="mkurl" placeholder="HTMLファイルのURL（例: https://…/game.html）">
     <button id="mkfetch">URLから作る</button>
@@ -183,6 +203,27 @@ document.getElementById("postcopy").onclick = async () => {
   if(!v) return;
   try { await navigator.clipboard.writeText(v); alert("投稿文をコピーしました。Xに貼り付けて投稿してください"); } catch(e){ document.getElementById("posttext").select(); }
 };
+/* ---- controller ---- */
+function keyName(code){ return code === "Space" ? " " : code === "KeyX" ? "x" : code; }
+function sendKey(code, down){
+  const w = frame.contentWindow; if(!w) return;
+  try {
+    const ev = new w.KeyboardEvent(down ? "keydown" : "keyup", { code: code, key: keyName(code), bubbles: true, cancelable: true });
+    const doc = frame.contentDocument;
+    if(doc){ doc.dispatchEvent(ev); }
+  } catch(e){}
+  try { w.postMessage({ t: "hp-key", code: code, down: down }, "*"); } catch(e){}
+}
+document.querySelectorAll(".pbtn").forEach(b => {
+  const code = b.dataset.code;
+  b.addEventListener("pointerdown", e => { e.preventDefault(); b.setPointerCapture(e.pointerId); sendKey(code, true); });
+  const off = e => { e.preventDefault(); sendKey(code, false); };
+  b.addEventListener("pointerup", off);
+  b.addEventListener("pointercancel", off);
+  b.addEventListener("contextmenu", e => e.preventDefault());
+});
+document.getElementById("padbtn").onclick = () => { document.getElementById("pad").classList.toggle("on"); };
+
 init();
 </script>
 </body>
