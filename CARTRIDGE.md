@@ -35,11 +35,13 @@
 | HP Round | 丸ゴシック | 可愛い系、子供向け、ほのぼのした日常もの | `font-family: "HP Round", sans-serif` |
 | HP Mono | 等幅 | 数字を扱うゲーム、ログや端末が出るもの、シミュレーション、スコア表示 | `font-family: "HP Mono", monospace` |
 | HP Dot | ドット絵風 | レトロなアクションやRPG風、ドット絵のゲーム | `font-family: "HP Dot", sans-serif` |
+| HP Denki | 太字ピクセル（漢字対応） | 漢字の文章も出るレトロゲーム、タイトルや会話文（実体はピクセルフォント「でんきチップ」） | `font-family: "HP Denki", sans-serif` |
 
 迷ったら、和風なら HP Serif、牌やパズルなら HP Sans、レトロなら HP Dot が目安です。
 
 - 実体は端末に入っているフォントです（プレイヤーの定義が、端末ごとに一番近いものを選びます）。端末によって字形は少し変わります。
 - HP Dot は、端末にドットフォント（DotGothic16 など）が入っている場合に効きます。入っていない端末では通常のゴシックで表示されます。
+- HP Denki だけは実体もプレイヤー側が持ちます（ピクセルフォント「でんきチップ」、作者: 患者長ひっく氏、SIL Open Font License 1.1）。JIS第1水準の漢字まで入っているので、漢字の文章でもドット字形になります。
 - 必ず後ろに一般名（serif / sans-serif / monospace）を続けて書いてください。定義が入らない環境でも表示が崩れません。
 - 単体で開く場合にも同じ名前を使いたいときは、プレイヤーのリポジトリ（index.html 内の FONT_CSS）の @font-face 定義を、そのまま自分のHTMLに貼ってください。
 

@@ -30,7 +30,7 @@
 
 プレイヤーが持っている共通部品:
 
-- 標準フォント5種（HP Serif／HP Sans／HP Round／HP Mono／HP Dot）
+- 標準フォント6種（HP Serif／HP Sans／HP Round／HP Mono／HP Dot／HP Denki）
 - アイコンフォント RPG Awesome（モンスターや武器のアイコン）
 - hp.js（2D向けの共通ライブラリー。下記）
 - three.js（3D向けライブラリ、r128）
