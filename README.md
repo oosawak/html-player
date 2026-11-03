@@ -31,6 +31,7 @@
 | 一騎討ち ― 刹那の一閃 | 「！」で斬る反射神経の決闘、5人抜き | https://oosawak.github.io/ikkiuchi/ |
 | 一人麻雀 | ツモって切って和了を目指す一人打ち | https://oosawak.github.io/hitori-mahjong/ |
 | 上海 ― 牌消し | 同じ牌のペアを消していくパズル | https://oosawak.github.io/shanghai/ |
+| Cube Core Dungeon | 3Dダンジョン（約90KB）。埋め込みではなくURL指定で差す大型カートリッジの例 | https://oosawak.github.io/CubeCoreDungeon/ |
 
 ## カートリッジの配り方（2形式）
 
@@ -62,7 +63,7 @@
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.5（カートリッジ3本収録、URL作成ツール、画面コントローラー、標準フォント付き）
+- バージョン: v0.6（カートリッジ4本収録、URL作成ツール、画面コントローラー、標準フォント付き）
 
 ## URL作成ツール
 
