@@ -35,7 +35,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.4</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.5</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -203,6 +203,22 @@ document.getElementById("postcopy").onclick = async () => {
   if(!v) return;
   try { await navigator.clipboard.writeText(v); alert("投稿文をコピーしました。Xに貼り付けて投稿してください"); } catch(e){ document.getElementById("posttext").select(); }
 };
+/* ---- standard fonts (injected into same-origin cartridges) ---- */
+const FONT_CSS = [
+ '@font-face{font-family:"HP Serif";src:local("Hiragino Mincho ProN"),local("Hiragino Mincho Pro"),local("Yu Mincho"),local("YuMincho"),local("Noto Serif JP"),local("MS PMincho")}',
+ '@font-face{font-family:"HP Sans";src:local("Hiragino Kaku Gothic ProN"),local("Hiragino Sans"),local("Yu Gothic"),local("YuGothic"),local("Noto Sans JP"),local("Meiryo")}',
+ '@font-face{font-family:"HP Round";src:local("Hiragino Maru Gothic ProN"),local("M PLUS Rounded 1c"),local("Yu Gothic"),local("Noto Sans JP")}',
+ '@font-face{font-family:"HP Mono";src:local("SF Mono"),local("Menlo"),local("Consolas"),local("Noto Sans Mono"),local("MS Gothic")}',
+ '@font-face{font-family:"HP Dot";src:local("DotGothic16"),local("PixelMplus10"),local("PixelMplus12"),local("M PLUS Rounded 1c")}'
+].join("\n");
+frame.addEventListener("load", () => {
+  try {
+    const d = frame.contentDocument; if(!d || !d.head) return;
+    const s = d.createElement("style"); s.textContent = FONT_CSS;
+    d.head.appendChild(s);
+  } catch(e){}
+});
+
 /* ---- controller ---- */
 function keyName(code){ return code === "Space" ? " " : code === "KeyX" ? "x" : code; }
 function sendKey(code, down){
