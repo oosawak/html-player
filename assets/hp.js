@@ -30,6 +30,26 @@ var HP={
     }
     requestAnimationFrame(f);
   },
+  bar:function(g,x,y,w,h,ratio,color,bg){
+    g.fillStyle=bg||"#2a3c5f";g.fillRect(x,y,w,h);
+    g.fillStyle=color;g.fillRect(x,y,w*Math.max(0,Math.min(1,ratio)),h);
+  },
+  text:function(g,s,x,y,size,color,align,font){
+    g.font=(size||13)+'px '+(font||'"HP Mono",monospace');
+    g.fillStyle=color||"#fff";g.textAlign=align||"left";
+    g.fillText(s,x,y);g.textAlign="left";
+  },
+  panel:function(g,x,y,w,h,fill,stroke){
+    g.fillStyle=fill||"rgba(10,14,30,.85)";g.fillRect(x,y,w,h);
+    if(stroke){g.strokeStyle=stroke;g.strokeRect(x,y,w,h)}
+  },
+  title:function(g,W,H,title,lines,color){
+    g.fillStyle=color||"#fff";g.textAlign="center";
+    g.font='700 25px "HP Sans",sans-serif';g.fillText(title,W/2,H/2-40);
+    g.font='13px "HP Sans",sans-serif';
+    (lines||[]).forEach(function(s,i){g.fillText(s,W/2,H/2-8+i*22)});
+    g.textAlign="left";
+  },
   beep:function(freq,dur,type,vol){
     try{
       var C=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)());

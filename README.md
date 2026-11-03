@@ -49,6 +49,10 @@
 | `HP.left()` / `HP.right()` / `HP.up()` / `HP.down()` | 十字キーが押されている間 true |
 | `HP.a()` / `HP.b()` | Aボタン（Space）／Bボタン（KeyX）が押されている間 true |
 | `HP.aHit()` / `HP.bHit()` | 押した瞬間だけ true（タイトル画面の決定などに） |
+| `HP.bar(g, x, y, w, h, ratio, color, bg)` | ゲージ（体力やエネルギーのバー）を描く。ratio は 0〜1 |
+| `HP.text(g, s, x, y, size, color, align, font)` | 文字を描く。align は left／right／center |
+| `HP.panel(g, x, y, w, h, fill, stroke)` | パネル（半透明の板）を描く |
+| `HP.title(g, W, H, title, lines, color)` | タイトル画面を描く。lines は説明文の配列 |
 | `HP.beep(freq, dur, type, vol)` | 効果音を鳴らす。freq=周波数、dur=長さ（秒）、type=波形（省略時 square）、vol=音量（省略時 0.04） |
 | `HP.keys` | 押されているキーの一覧（キーコードを名前として持つオブジェクト） |
 
@@ -112,7 +116,7 @@ HP.loop(function(dt){
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.15（カートリッジ9本収録、URL作成ツール、画面コントローラー、標準フォント付き）
+- バージョン: v0.16（カートリッジ9本収録、URL作成ツール、画面コントローラー、標準フォント付き）
 
 ## URL作成ツール
 

@@ -135,30 +135,13 @@ HP.loop(dt=>{
   g.beginPath();g.moveTo(15,0);g.lineTo(-11,-11);g.lineTo(-5,0);g.lineTo(-11,11);g.closePath();g.fill();
   g.restore();
  }
- g.font='13px "HP Mono",monospace';g.fillStyle="#f0eaff";g.textAlign="left";
- g.fillText("SCORE "+score,10,18);
- g.textAlign="right";g.fillText("HI "+best,W-10,18);g.textAlign="left";
- g.fillText("ENERGY",10,36);
- g.fillStyle="#2a3c5f";g.fillRect(76,26,150,10);
- g.fillStyle=energy>30?"#57e08a":"#e05252";g.fillRect(76,26,150*energy/100,10);
- g.fillText("BURST",246,36);
- g.fillStyle="#2a3c5f";g.fillRect(300,26,150,10);
- g.fillStyle=gauge>=100?"#ffd94a":"#8d7fc0";g.fillRect(300,26,150*gauge/100,10);
- if(state===0){
-  g.fillStyle="#f0eaff";g.textAlign="center";
-  g.font='700 25px "HP Sans",sans-serif';g.fillText("RING BURST",W/2,140);
-  g.font='13px "HP Sans",sans-serif';
-  g.fillText("敵は全方位から来る。玉は自動追尾",W/2,182);
-  g.fillText("ゲージ満タンでタップするとバースト",W/2,206);
-  g.fillText("Bボタンかタップでスタート",W/2,238);
-  g.textAlign="left";
- }
- if(state===2){
-  g.fillStyle="#f0eaff";g.textAlign="center";
-  g.font='700 24px "HP Sans",sans-serif';g.fillText("SIGNAL LOST",W/2,158);
-  g.font='15px "HP Sans",sans-serif';g.fillText("MISSION FAILED ― SCORE "+score,W/2,190);
-  g.font='13px "HP Sans",sans-serif';g.fillText("Bボタンかタップでもう一度",W/2,222);
-  g.textAlign="left";
- }
+ HP.text(g,"SCORE "+score,10,18,13,"#f0eaff");
+ HP.text(g,"HI "+best,W-10,18,13,"#f0eaff","right");
+ HP.text(g,"ENERGY",10,36,13,"#f0eaff");
+ HP.bar(g,76,26,150,10,energy/100,energy>30?"#57e08a":"#e05252");
+ HP.text(g,"BURST",246,36,13,"#f0eaff");
+ HP.bar(g,300,26,150,10,gauge/100,gauge>=100?"#ffd94a":"#8d7fc0");
+ if(state===0)HP.title(g,W,H,"RING BURST",["敵は全方位から来る。玉は自動追尾","ゲージ満タンでタップするとバースト","Bボタンかタップでスタート"],"#f0eaff");
+ if(state===2)HP.title(g,W,H,"SIGNAL LOST",["MISSION FAILED ― SCORE "+score,"Bボタンかタップでもう一度"],"#f0eaff");
 });
 </script></body></html>

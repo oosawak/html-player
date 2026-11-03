@@ -106,6 +106,10 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 - `HP.left() / HP.right() / HP.up() / HP.down()` — 十字キー（押されている間）
 - `HP.a() / HP.b()` — Aボタン（Space）／Bボタン（KeyX）（押されている間）
 - `HP.aHit() / HP.bHit()` — 押した瞬間だけ true
+- `HP.bar(g, x, y, w, h, ratio, color, bg)` — ゲージを描く（UI部品）
+- `HP.text(g, s, x, y, size, color, align, font)` — 文字を描く（UI部品）
+- `HP.panel(g, x, y, w, h, fill, stroke)` — パネルを描く（UI部品）
+- `HP.title(g, W, H, title, lines, color)` — タイトル画面を描く（UI部品）
 - `HP.beep(freq, dur, type, vol)` — 簡単な効果音（WebAudio）
 
 ### three.js（3D向け）
