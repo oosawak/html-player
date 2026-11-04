@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
-<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' https://oosawak.github.io; style-src 'unsafe-inline' https://oosawak.github.io; img-src data: blob: https://oosawak.github.io; font-src data: https://oosawak.github.io; media-src data: blob: https://oosawak.github.io; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-src 'self' https:">
+<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' https://oosawak.github.io; style-src 'unsafe-inline' https://oosawak.github.io; img-src data: blob: https://oosawak.github.io; font-src data: https://oosawak.github.io; media-src data: blob: https://oosawak.github.io; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-src 'self' https:">
 <title>HTMLプレイヤー ― URLで配れるカートリッジ</title>
 <style>
   body { margin:0; background:#1a1210; color:#f3e9d2; font-family: Georgia, "Hiragino Mincho ProN", serif; }
@@ -41,7 +41,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.35</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.36</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -83,8 +83,17 @@
     <button id="sharep" class="sub">埋め込みURLをコピー</button>
     <button id="padbtn" class="sub">コントローラー</button>
     <button id="watchbtn" class="sub">暴走検知 オン</button>
+    <button id="srcbtn" class="sub">ソースを見る</button>
   </div>
   <p class="note">共有の形は2つあります。通常は <b>#g=カートリッジの場所</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
+  <div id="srcpanel" style="display:none">
+    <div class="row">
+      <button id="srccopy" class="sub">ソースをコピー</button>
+      <button id="srcclose" class="sub">閉じる</button>
+    </div>
+    <div class="info" id="srcinfo"></div>
+    <textarea id="srcview" rows="18" readonly placeholder="ここにカートリッジのソース（HTML）が表示されます"></textarea>
+  </div>
 
   <h2>共通部品はプレイヤー側が持ちます</h2>
   <p class="note">フォントやアイコン、共通のJavaScriptは、カートリッジには入れず、<b>プレイヤー側が持ってゲームに渡します</b>。そのためカートリッジは小さく作れます。代わりに、それらを使うゲームは単体ファイルだけでは完結しません（プレイヤー上で動かす前提です）。プレイヤーが持っている共通部品は次の通りです。</p>
@@ -127,6 +136,7 @@ const PLAYER = "https://oosawak.github.io/html-player/";
 let frame = document.getElementById("frame");
 const cart = document.getElementById("cart");
 let currentGame = "";
+let currentSource = "";
 let wdArmed = false, wdLast = 0, justStopped = false;
 let watchOn = true;
 try { watchOn = localStorage.getItem("hpwatch") !== "0"; } catch(e){}
@@ -141,12 +151,12 @@ function freshFrame(){
   frame = nf;
 }
 function load(url){
-  currentGame = url; wdArmed = false; document.getElementById("wdmsg").textContent = "";
+  currentGame = url; currentSource = ""; hideSource(); wdArmed = false; document.getElementById("wdmsg").textContent = "";
   const retryArmed = justStopped; justStopped = false;
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=35" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=36" : url; // プレイヤー更新時にカートリッジも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -154,7 +164,7 @@ function load(url){
   }
 }
 function loadPayload(b64){
-  wdArmed = false; document.getElementById("wdmsg").textContent = "";
+  currentSource = ""; hideSource(); wdArmed = false; document.getElementById("wdmsg").textContent = "";
   freshFrame();
   frame.setAttribute("sandbox", STRICT);
   const f = frame;
@@ -164,7 +174,7 @@ function loadPayload(b64){
   const bytes = new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
   new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip")))
-    .text().then(html => { currentGame = ""; f.srcdoc = html; })
+    .text().then(html => { currentGame = ""; currentSource = html; f.srcdoc = html; })
     .catch(()=>{ document.getElementById("mkinfo").textContent = "ペイロードの解凍に失敗しました。"; });
 }
 function selectCartridge(url){
@@ -304,6 +314,31 @@ setInterval(() => {
     document.getElementById("wdmsg").textContent = "カートリッジの応答が止まったため、停止しました（暴走検知）。リロードで再開できます。";
   }
 }, 1000);
+
+/* ---- cartridge source viewer ---- */
+const srcpanel = document.getElementById("srcpanel");
+const srcview = document.getElementById("srcview");
+const srcinfo = document.getElementById("srcinfo");
+function hideSource(){ srcpanel.style.display = "none"; }
+document.getElementById("srcbtn").onclick = async () => {
+  if(srcpanel.style.display !== "none"){ hideSource(); return; }
+  srcpanel.style.display = "block";
+  if(!currentSource && currentGame){
+    srcinfo.textContent = "ソースを読み込んでいます…";
+    srcview.value = "";
+    try { currentSource = await (await fetch(currentGame)).text(); }
+    catch(e){ srcinfo.textContent = "ソースを取得できませんでした。"; return; }
+  }
+  if(!currentSource){ srcinfo.textContent = "表示できるソースがありません。"; return; }
+  srcview.value = currentSource;
+  srcinfo.textContent = "いま動いているカートリッジのソース（HTML）そのものです（" + currentSource.length + "文字）。作り方の参考にどうぞ。";
+};
+document.getElementById("srccopy").onclick = async () => {
+  if(!srcview.value) return;
+  try { await navigator.clipboard.writeText(srcview.value); alert("ソースをコピーしました"); }
+  catch(e){ srcview.select(); if(document.execCommand) document.execCommand("copy"); }
+};
+document.getElementById("srcclose").onclick = hideSource;
 
 init();
 </script>
