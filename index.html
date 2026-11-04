@@ -29,7 +29,7 @@
   #listwrap.on { display:block; }
   #listgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .gcard { background:#2b1a12; border:1px solid #8a6b3f; border-radius:8px; overflow:hidden; cursor:pointer; padding:0; text-align:left; font-family:inherit; color:#f3e9d2; }
-  .gcard img { display:block; width:100%; aspect-ratio:4/5; object-fit:cover; object-position:top; background:#111; }
+  .gcard img { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; object-position:center; background:#111; }
   .gcard .gt { display:block; padding:6px 8px 2px; font-size:13px; line-height:1.4; letter-spacing:0; }
   .gcard .gs { display:block; padding:0 8px 8px; font-size:11px; color:#c9b48a; }
   .gcard.cur { border-color:#d8b46a; box-shadow:0 0 0 2px #7c2128; }
@@ -56,7 +56,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.39</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.40</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -178,7 +178,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=39" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=40" : url; // プレイヤー更新時にカートリッジも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -365,12 +365,12 @@ function buildList(){
     const b = document.createElement("button");
     b.className = "gcard"; b.dataset.game = o.value;
     const img = document.createElement("img");
-    img.src = "assets/thumbs/" + o.value.replace(/^games\//, "").replace(/\/$/, "") + ".jpg";
+    img.src = "assets/thumbs/" + o.value.replace(/^games\//, "").replace(/\/$/, "") + ".jpg?v=40";
     img.alt = o.textContent; img.loading = "lazy";
     const gt = document.createElement("span"); gt.className = "gt"; gt.textContent = o.textContent;
     const gs = document.createElement("span"); gs.className = "gs";
     const p = PAYLOADS[o.value];
-    gs.textContent = p ? ("埋め込みURL " + p.length.toLocaleString("ja-JP") + "文字" + (p.length <= 4096 ? "（4,096字以内）" : "（4,096字超え）")) : "埋め込みURLなし";
+    gs.textContent = p ? ("埋め込みURL " + p.length.toLocaleString("ja-JP") + "文字" + (p.length <= 4096 ? "（4,096字以内）" : "（4,096字を" + (p.length - 4096).toLocaleString("ja-JP") + "字オーバー）")) : "埋め込みURLなし";
     b.append(img, gt, gs);
     b.onclick = () => { selectCartridge(o.value); load(o.value); };
     grid.appendChild(b);
