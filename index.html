@@ -56,7 +56,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.41</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.42</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -179,7 +179,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=41" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=42" : url; // プレイヤー更新時にカートリッジも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -409,7 +409,7 @@ function buildList(){
     const gt = document.createElement("span"); gt.className = "gt"; gt.textContent = o.textContent;
     const gs = document.createElement("span"); gs.className = "gs";
     const p = PAYLOADS[o.value];
-    gs.textContent = p ? ("埋め込みURL " + p.length.toLocaleString("ja-JP") + "文字" + (p.length <= 4096 ? "（4,096字以内）" : "（4,096字を" + (p.length - 4096).toLocaleString("ja-JP") + "字オーバー）")) : "埋め込みURLなし";
+    gs.textContent = p ? ("埋め込みURL " + p.length.toLocaleString("ja-JP") + "文字") : "埋め込みURLなし";
     b.append(img, gt, gs);
     b.onclick = () => { selectCartridge(o.value); load(o.value); };
     grid.appendChild(b);
