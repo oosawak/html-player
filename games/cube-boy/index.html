@@ -14,7 +14,7 @@
 </head>
 <body>
 <canvas id="cv" width="512" height="512"></canvas>
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=5"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=6"></script>
 <script>
 "use strict";
 // CubeBoy — ダッシュと壁ジャンプの小さなプラットフォーマー（Pyxel版からの作り直し）
@@ -441,7 +441,7 @@ function stepMain(){
   drawScene();
 }
 const SC=HP.scene({title:{frame:stepTitle},main:{frame:stepMain},overseq:{frame:stepSeq},over:{frame:stepEnd},clear:{frame:stepEnd}},"title");
-function go(name){state=name;SC.go(name==="boss"?"main":name)}
+function go(name){state=name;SC.go(name==="boss"||name==="play"?"main":name)}
 function step(){
   frame++;
   tapNowA=tapA;tapNowB=tapB;tapA=false;tapB=false;

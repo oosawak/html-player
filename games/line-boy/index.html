@@ -14,7 +14,7 @@
 </head>
 <body>
 <canvas id="cv" width="512" height="512"></canvas>
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=5"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=6"></script>
 <script>
 "use strict";
 // LINE BOY — ネオンな線画プラットフォーマー（Pyxel版からの作り直し）
@@ -120,7 +120,8 @@ function genTerrain(seed,themeIdx){
   }
   const ne=(LEVEL_W/(TS*16))|0;
   for(let i=0;i<ne;i++){
-    const ex=ri(rng,280,LEVEL_W-TS*4); // スタート直近には置かないlet ey=H-80;
+    const ex=ri(rng,280,LEVEL_W-TS*4); // スタート直近には置かない
+    let ey=H-80;
     for(const s of segs){if(s[0]<=ex&&ex<=s[0]+s[2]){ey=s[1];break}}
     enemies.push([ex,ey]);
   }

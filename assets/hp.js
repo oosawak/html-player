@@ -4,19 +4,20 @@
 (function(){
 "use strict";
 if(window.HP)return;
-var keys={},pressed={};
+var keys={},pressed={},pendingUp={};
+function kd(code){if(!keys[code])pressed[code]=true;keys[code]=true;delete pendingUp[code]}
+function ku(code){pendingUp[code]=performance.now()+50} // 短いタップでも最低50msは押下が見えるようにする
 addEventListener("keydown",function(e){
-  if(!e.repeat){keys[e.code]=true;pressed[e.code]=true}
+  if(!e.repeat)kd(e.code);
   if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].indexOf(e.code)>=0)e.preventDefault();
 });
-addEventListener("keyup",function(e){keys[e.code]=false});
+addEventListener("keyup",function(e){ku(e.code)});
 // 画面コントローラー（プレイヤー側）からの入力。隔離された枠ではキーイベントが
 // 直接届かないため、プレイヤーは postMessage で送り、ここでキーの状態に直す。
 addEventListener("message",function(e){
   var d=e.data;
   if(!d||d.t!=="hp-key"||typeof d.code!=="string")return;
-  if(d.down){if(!keys[d.code])pressed[d.code]=true;keys[d.code]=true}
-  else keys[d.code]=false;
+  if(d.down)kd(d.code);else ku(d.code);
 });
 setInterval(function(){try{parent.postMessage({t:"hp-alive"},"*")}catch(e){}},500);
 var HP={
@@ -35,6 +36,8 @@ var HP={
       var dt=Math.min(0.05,(n-p)/1000);p=n;
       fn(dt);
       for(var k in pressed)delete pressed[k];
+      var _now=performance.now();
+      for(var u in pendingUp){if(_now>=pendingUp[u]){keys[u]=false;delete pendingUp[u]}}
       requestAnimationFrame(f);
     }
     requestAnimationFrame(f);

@@ -111,7 +111,7 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 ### hp.js（2D向けの小さな共通部品）
 
 ```html
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=5"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=6"></script>
 ```
 
 - `HP.loop(function(dt){ ... })` — ゲームループ。dt は前フレームからの秒数
