@@ -168,7 +168,7 @@ r128 の three.min.js をプレイヤー側に置いてあります。
 3. 単一HTMLで実装する。見た目は Canvas か DOM、音は WebAudio の簡単な効果音まで。
 4. プレイヤーのツールで埋め込みURLを作り、サイズを確認する。超える場合は、演出と文章から削る。
 5. 実機（スマホ）で、タップとコントローラーの両方で遊べることを確認する。
-6. `games/` に収録する場合は、埋め込みURLを `games/<名前>/payload-url.txt` に保存し、プレイヤーの `index.html` の `PAYLOADS`（「埋め込みURLをコピー」ボタン用）にも同じURLを登録する。ゲームを更新して埋め込みURLが変わったら、両方を一緒に差し替えること。
+6. `games/` に収録する場合は、埋め込みURLを `games/<名前>/payload-url.txt` に保存し、登録情報 `games/<名前>/game.md`（frontmatter に title／lib／order）を書く。この2つを push すると、GitHub Actions が `games.json` を作り直し、プレイヤーのセレクトと一覧に自動で出る（「埋め込みURLをコピー」もその JSON から動く）。ゲームを更新して埋め込みURLが変わったら、payload-url.txt を差し替えて push するだけでよい。
 
 ## 収録済みカートリッジ（手本）
 
