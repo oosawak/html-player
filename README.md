@@ -83,6 +83,10 @@ HP.loop(function(dt){
 | 上海 ― 牌消し | 同じ牌のペアを消していくパズル | https://oosawak.github.io/shanghai/ |
 | Cube Core Dungeon | 3Dダンジョン（約90KB）。埋め込みではなくURL指定で差す大型カートリッジの例 | https://oosawak.github.io/CubeCoreDungeon/ |
 | DUNGEON//LOAD | Rust/WASMのダンジョン（外部ファイル・CDN併用の大型例、URL指定） | https://oosawak.github.io/rustgames/play/dungeonload/index.html |
+| Neon Maze（WASM） | rustgames の小さなWASMゲームの例（2Dの迷路） | https://oosawak.github.io/rustgames/play/maze.html |
+| Neon Maze 3D（WASM） | 同じ迷路の3D版。2Dと3Dで見せ方を替える例 | https://oosawak.github.io/rustgames/play/maze3d/index.html |
+| Animal Doku（WASM） | rustgames の小さなWASMパズル | https://oosawak.github.io/rustgames/play/animal-puzzle/index.html |
+| Earth Defense（WASM） | rustgames の小さなWASMゲーム（地球防衛） | https://oosawak.github.io/rustgames/play/earthdef/index.html |
 | モンスターあわせ | アイコン神経衰弱。RPG Awesomeをプレイヤー供給で使い、埋め込みでもアイコンが出る例 | https://oosawak.github.io/monster-awase/ |
 | モンスターハント | アイコン射撃場。タップと十字キー＋A/Bの両対応で、コントローラーの実験も兼ねる | https://oosawak.github.io/monster-hunt/ |
 | スターブレイカー（共通Lib） | 縦シューティング。上から来る敵と惑星を避けて撃つ。撃つとエネルギーを消費する | https://oosawak.github.io/html-player/games/star-breaker/ |
@@ -130,7 +134,7 @@ HP.loop(function(dt){
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.18（カートリッジ9本収録、URL作成ツール、画面コントローラー、標準フォント付き）
+- バージョン: v0.19（カートリッジ9本＋WASMサンプル4本収録、URL作成ツール、画面コントローラー、標準フォント付き）
 - 内蔵カートリッジと埋め込みURLのゲームは、隔離した iframe（sandbox）＋CSPで実行します。外部への通信、フォーム送信、ダイアログ表示はできません。記録（localStorage）は他のサイトと共有されず、保存も残りません
 - hp.js を使うゲームには暴走検知が効きます（生存信号が途絶えたら自動で停止。プレイヤーのボタンでオフにできます）
 
