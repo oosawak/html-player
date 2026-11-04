@@ -87,6 +87,8 @@ HP.loop(function(dt){
 | Neon Maze 3D（WASM） | 同じ迷路の3D版。2Dと3Dで見せ方を替える例 | https://oosawak.github.io/rustgames/play/maze3d/index.html |
 | Animal Doku（WASM） | rustgames の小さなWASMパズル | https://oosawak.github.io/rustgames/play/animal-puzzle/index.html |
 | Earth Defense（WASM） | rustgames の小さなWASMゲーム（地球防衛） | https://oosawak.github.io/rustgames/play/earthdef/index.html |
+| LINE BOY（WASM） | Pyxel（Python）製のアクション。WASMで動く大きな1ファイル（約12MB） | https://oosawak.github.io/Lineboy/lineboy.html |
+| CubeBoy（WASM） | Pyxel（Python）製。WASMで動く大きな1ファイル（約10MB） | https://oosawak.github.io/Cubeboy/Cubeboy.html |
 | モンスターあわせ | アイコン神経衰弱。RPG Awesomeをプレイヤー供給で使い、埋め込みでもアイコンが出る例 | https://oosawak.github.io/monster-awase/ |
 | モンスターハント | アイコン射撃場。タップと十字キー＋A/Bの両対応で、コントローラーの実験も兼ねる | https://oosawak.github.io/monster-hunt/ |
 | スターブレイカー（共通Lib） | 縦シューティング。上から来る敵と惑星を避けて撃つ。撃つとエネルギーを消費する | https://oosawak.github.io/html-player/games/star-breaker/ |
@@ -134,7 +136,7 @@ HP.loop(function(dt){
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.19（カートリッジ9本＋WASMサンプル4本収録、URL作成ツール、画面コントローラー、標準フォント付き）
+- バージョン: v0.20（カートリッジ9本＋WASMサンプル6本収録、URL作成ツール、画面コントローラー、標準フォント付き）
 - 内蔵カートリッジと埋め込みURLのゲームは、隔離した iframe（sandbox）＋CSPで実行します。外部への通信、フォーム送信、ダイアログ表示はできません。記録（localStorage）は他のサイトと共有されず、保存も残りません
 - hp.js を使うゲームには暴走検知が効きます（生存信号が途絶えたら自動で停止。プレイヤーのボタンでオフにできます）
 
