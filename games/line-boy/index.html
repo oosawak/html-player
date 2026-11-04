@@ -120,7 +120,7 @@ function genTerrain(seed,themeIdx){
   }
   const ne=(LEVEL_W/(TS*16))|0;
   for(let i=0;i<ne;i++){
-    const ex=ri(rng,TS*4,LEVEL_W-TS*4);let ey=H-80;
+    const ex=ri(rng,280,LEVEL_W-TS*4); // スタート直近には置かないlet ey=H-80;
     for(const s of segs){if(s[0]<=ex&&ex<=s[0]+s[2]){ey=s[1];break}}
     enemies.push([ex,ey]);
   }
@@ -197,7 +197,8 @@ function mkPlayer(x,y){
 }
 let tapA=false,tapNow=false;
 cv.addEventListener("pointerdown",()=>{tapA=true});
-function aHit(){return HP.aHit()||tapNow}
+let aPrev=false,aEdge=false;
+function aHit(){return aEdge}
 function aHeld(){return HP.a()||tapNow}
 
 function playerDie(p,parts,col){
@@ -498,6 +499,7 @@ function go(name){state=name;SC.go(name)}
 function step(){
   frame++;
   tapNow=tapA;tapA=false;
+  const heldNow=HP.a()||tapNow;aEdge=heldNow&&!aPrev;aPrev=heldNow;
   SC.frame();
 }
 function drawPlay(){

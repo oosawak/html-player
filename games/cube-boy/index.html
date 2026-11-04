@@ -126,6 +126,7 @@ function resolveOverlap(p){
   }
 }
 let tapA=false,tapB=false,tapNowA=false,tapNowB=false,prevUp=false;
+let cbAEdge=false,cbBEdge=false,cbAPrev=false,cbBPrev=false;
 cv.addEventListener("pointerdown",()=>{tapA=true});
 function updPlayer(p,parts){
   resolveOverlap(p);
@@ -149,7 +150,7 @@ function updPlayer(p,parts){
       p.vy+=grav;
     }
     const upNow=HP.up();
-    if(HP.aHit()||tapNowA||(upNow&&!prevUp))p.buf=4;
+    if(cbAEdge||tapNowA||(upNow&&!prevUp))p.buf=4;
     prevUp=upNow;
     if(p.buf>0){
       if(p.coyote>0){
@@ -160,7 +161,7 @@ function updPlayer(p,parts){
         HP.beep(523,0.05,"square",0.04);
       }
     }
-    if((HP.bHit()||tapNowB)&&p.canDash){
+    if((cbBEdge||tapNowB)&&p.canDash){
       let idx=dxIn,idy=dyIn;
       if(idx===0&&idy===0)idx=p.facing;
       const mag=Math.hypot(idx,idy);
@@ -346,7 +347,7 @@ function burst(x,y,col,n,pow){
 }
 function stepTitle(){
     drawTitle();
-    if(HP.aHit()||tapNowA)resetGame();
+    if(HP.a()||cbAEdge||tapNowA)resetGame();
     return;
 }
 function stepEnd(){
@@ -364,7 +365,7 @@ function stepEnd(){
       g.fillText("Aボタンでもう一度",64,82);
     }
     g.textAlign="left";g.setTransform(1,0,0,1,0,0);
-    if(HP.aHit()||tapNowA)resetGame();
+    if(HP.a()||cbAEdge||tapNowA)resetGame();
     return;
 }
 function stepSeq(){
@@ -444,6 +445,9 @@ function go(name){state=name;SC.go(name==="boss"?"main":name)}
 function step(){
   frame++;
   tapNowA=tapA;tapNowB=tapB;tapA=false;tapB=false;
+  const haNow=HP.a(),hbNow=HP.b();
+  cbAEdge=haNow&&!cbAPrev;cbAPrev=haNow;
+  cbBEdge=hbNow&&!cbBPrev;cbBPrev=hbNow;
   SC.frame();
 }
 // fixed-step loop (30Hz, same feel as the original)
