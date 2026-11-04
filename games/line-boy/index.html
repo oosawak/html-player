@@ -227,22 +227,20 @@ function drawBoss(b,camX){
       nLine(zx,sy+10,zx+4,sy+15,col,null);nLine(zx+4,sy+15,zx+8,sy+10,col,null);
     }
   }else if(b.kind===2){
-    // 大コウモリ（CAVE）: 羽ばたく翼＋耳と牙
-    const flap=Math.sin(b.timer*0.25)*8;
-    for(const dir of [-1,1]){
-      const pts=[[-8,-4],[-30,-16-flap],[-38,0],[-26,2],[-34,10-flap*0.5],[-20,8],[-9,4]];
-      g.strokeStyle=PAL[flash?CW:CPU];g.beginPath();
-      pts.forEach(([px,py],i)=>{const X=sx+px*dir,Y=sy+py;i?g.lineTo(X,Y):g.moveTo(X,Y)});
-      g.stroke();
-      g.strokeStyle=PAL[CP];g.beginPath();
-      g.moveTo(sx-8*dir,sy-4);g.lineTo(sx-30*dir,sy-16-flap);g.stroke();
+    // CAVE: 元の円盤ボス（2026-11-05 本人の指示で差し戻し）
+    const r=b.size;
+    nCircb(sx,sy,r+6,CGR);nCircb(sx,sy,r+4,flash?col:CB);
+    nCircb(sx,sy,r,col,CGR);
+    nLine(sx-r+4,sy,sx+r-4,sy,col,null);nLine(sx,sy-r+4,sx,sy+r-4,col,null);
+    for(let i=0;i<8;i++){
+      const a=i/8*Math.PI*2+b.timer*0.05;
+      g.strokeStyle=PAL[col];
+      g.strokeRect(sx+Math.cos(a)*(r-8)-4,sy+Math.sin(a)*(r-8)-4,8,8);
     }
-    nCircb(sx,sy,15,col,CP);
-    nCircb(sx,sy,10,CP,null);
-    nLine(sx-9,sy-11,sx-5,sy-23,col,null);nLine(sx-5,sy-23,sx-2,sy-12,col,null);
-    nLine(sx+9,sy-11,sx+5,sy-23,col,null);nLine(sx+5,sy-23,sx+2,sy-12,col,null);
-    pset(sx-6,sy-2,CR);pset(sx+6,sy-2,CR);
-    nLine(sx-4,sy+7,sx-3,sy+12,CW,null);nLine(sx+4,sy+7,sx+3,sy+12,CW,null);
+    for(let i=0;i<6;i++){
+      const a2=i/6*Math.PI*2-b.timer*0.08;
+      pset(sx+Math.cos(a2)*(r-20),sy+Math.sin(a2)*(r-20),CW);
+    }
   }else if(b.kind===3){
     // 大おばけ（GHOST）: 波打つ裾＋黒い目と口
     const body=flash?CP:CW,wob=Math.sin(b.timer*0.15)*2;
