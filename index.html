@@ -20,7 +20,14 @@
   button { background:#7c2128; color:#fff; border:1px solid #d8b46a; border-radius:6px; padding:8px 14px; font-size:14px; letter-spacing:.06em; cursor:pointer; font-family:inherit; }
   button.sub { background:#3a2a1a; }
   #stage { position:relative; background:#000; border:2px solid #8a6b3f; border-radius:8px; overflow:hidden; }
+  #viewtabs { display:flex; gap:4px; padding:6px 8px 0; background:#2b1a12; }
+  .vtab { background:#3a2a1a; color:#c9b48a; border:1px solid #8a6b3f; border-bottom:none; border-radius:8px 8px 0 0; padding:6px 18px; font-size:13px; }
+  .vtab.on { background:#7c2128; color:#fff; }
+  #screen { position:relative; }
   iframe { display:block; width:100%; height:70vh; border:0; background:#111; }
+  #srcwrap { position:absolute; inset:0; display:none; flex-direction:column; gap:8px; background:#20140e; padding:10px; box-sizing:border-box; z-index:4; }
+  #srcwrap.on { display:flex; }
+  #srcview { flex:1; resize:none; }
   #loading { position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(0,0,0,.55); color:#fff; font-size:14px; z-index:5; }
   #loading.on { display:flex; }
   .spin { width:34px; height:34px; border-radius:50%; border:4px solid rgba(255,255,255,.25); border-top-color:#fff; animation:hpspin .9s linear infinite; }
@@ -41,10 +48,8 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.36</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.37</span>
   </header>
-  <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
-
   <div class="row">
     <select id="cart">
       <option value="games/ikkiuchi/">一騎討ち ― 刹那の一閃</option>
@@ -59,10 +64,22 @@
       <option value="games/security-check/">セキュリティ確認サンプル</option>
     </select>
   </div>
-  <p class="note">名前の後ろの（共通Lib）は、共通ライブラリー（hp.js）を使っているゲームの印です。</p>
-  <p class="note">収録カートリッジと、埋め込みURL（#p=）のゲームは、すべて隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。外部のURLを指定して読み込むことはできません。</p>
-  <div id="stage"><iframe id="frame" title="cartridge stage"
-    sandbox="allow-scripts allow-pointer-lock"></iframe><div id="loading"><div class="spin"></div><div>読み込み中…</div></div></div>
+  <div id="stage">
+    <div id="viewtabs">
+      <button id="tabgame" class="vtab on">ゲーム</button>
+      <button id="tabsrc" class="vtab">ソース</button>
+    </div>
+    <div id="screen"><iframe id="frame" title="cartridge stage"
+    sandbox="allow-scripts allow-pointer-lock"></iframe><div id="loading"><div class="spin"></div><div>読み込み中…</div></div>
+    <div id="srcwrap">
+      <div class="row" style="margin:0">
+        <button id="srccopy" class="sub">ソースをコピー</button>
+      </div>
+      <div class="info" id="srcinfo"></div>
+      <textarea id="srcview" readonly placeholder="ここにカートリッジのソース（HTML）が表示されます"></textarea>
+    </div>
+    </div>
+  </div>
   <div id="pad" class="on">
     <div class="cluster">
       <button class="pbtn" data-code="ArrowLeft">◀</button>
@@ -83,18 +100,11 @@
     <button id="sharep" class="sub">埋め込みURLをコピー</button>
     <button id="padbtn" class="sub">コントローラー</button>
     <button id="watchbtn" class="sub">暴走検知 オン</button>
-    <button id="srcbtn" class="sub">ソースを見る</button>
   </div>
   <p class="note">共有の形は2つあります。通常は <b>#g=カートリッジの場所</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
-  <div id="srcpanel" style="display:none">
-    <div class="row">
-      <button id="srccopy" class="sub">ソースをコピー</button>
-      <button id="srcclose" class="sub">閉じる</button>
-    </div>
-    <div class="info" id="srcinfo"></div>
-    <textarea id="srcview" rows="18" readonly placeholder="ここにカートリッジのソース（HTML）が表示されます"></textarea>
-  </div>
-
+  <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
+  <p class="note">名前の後ろの（共通Lib）は、共通ライブラリー（hp.js）を使っているゲームの印です。</p>
+  <p class="note">収録カートリッジと、埋め込みURL（#p=）のゲームは、すべて隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。外部のURLを指定して読み込むことはできません。</p>
   <h2>共通部品はプレイヤー側が持ちます</h2>
   <p class="note">フォントやアイコン、共通のJavaScriptは、カートリッジには入れず、<b>プレイヤー側が持ってゲームに渡します</b>。そのためカートリッジは小さく作れます。代わりに、それらを使うゲームは単体ファイルだけでは完結しません（プレイヤー上で動かす前提です）。プレイヤーが持っている共通部品は次の通りです。</p>
   <p class="note">ライブラリーの使用は任意です。使わなくてもゲームは作れます。その場合は、入力の受け取りやゲームループ、効果音などをすべて自前のコードで実装してください。どちらの場合も、埋め込みURLが4,096文字以下に収まることが目標です（ライブラリーを使うと、その分だけゲーム本体を小さくできます）。</p>
@@ -147,7 +157,7 @@ function freshFrame(){
   const nf = document.createElement("iframe");
   nf.id = "frame"; nf.title = "cartridge stage";
   nf.setAttribute("sandbox", STRICT);
-  document.getElementById("stage").replaceChild(nf, frame);
+  frame.parentNode.replaceChild(nf, frame);
   frame = nf;
 }
 function load(url){
@@ -156,7 +166,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=36" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=37" : url; // プレイヤー更新時にカートリッジも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -315,14 +325,20 @@ setInterval(() => {
   }
 }, 1000);
 
-/* ---- cartridge source viewer ---- */
-const srcpanel = document.getElementById("srcpanel");
+/* ---- cartridge source viewer (tab on the stage) ---- */
+const srcwrap = document.getElementById("srcwrap");
 const srcview = document.getElementById("srcview");
 const srcinfo = document.getElementById("srcinfo");
-function hideSource(){ srcpanel.style.display = "none"; }
-document.getElementById("srcbtn").onclick = async () => {
-  if(srcpanel.style.display !== "none"){ hideSource(); return; }
-  srcpanel.style.display = "block";
+const tabgame = document.getElementById("tabgame");
+const tabsrc = document.getElementById("tabsrc");
+function setView(src){
+  srcwrap.classList.toggle("on", !!src);
+  tabgame.classList.toggle("on", !src);
+  tabsrc.classList.toggle("on", !!src);
+}
+function hideSource(){ setView(false); }
+async function showSource(){
+  setView(true);
   if(!currentSource && currentGame){
     srcinfo.textContent = "ソースを読み込んでいます…";
     srcview.value = "";
@@ -332,13 +348,14 @@ document.getElementById("srcbtn").onclick = async () => {
   if(!currentSource){ srcinfo.textContent = "表示できるソースがありません。"; return; }
   srcview.value = currentSource;
   srcinfo.textContent = "いま動いているカートリッジのソース（HTML）そのものです（" + currentSource.length + "文字）。作り方の参考にどうぞ。";
-};
+}
+tabgame.onclick = hideSource;
+tabsrc.onclick = showSource;
 document.getElementById("srccopy").onclick = async () => {
   if(!srcview.value) return;
   try { await navigator.clipboard.writeText(srcview.value); alert("ソースをコピーしました"); }
   catch(e){ srcview.select(); if(document.execCommand) document.execCommand("copy"); }
 };
-document.getElementById("srcclose").onclick = hideSource;
 
 init();
 </script>
