@@ -90,6 +90,7 @@ HP.loop(function(dt){
 | LINE BOY（WASM） | Pyxel（Python）製のアクション。WASMで動く大きな1ファイル（約12MB） | https://oosawak.github.io/Lineboy/lineboy.html |
 | CubeBoy（WASM） | Pyxel（Python）製。WASMで動く大きな1ファイル（約10MB） | https://oosawak.github.io/Cubeboy/Cubeboy.html |
 | モンスターあわせ | アイコン神経衰弱。RPG Awesomeをプレイヤー供給で使い、埋め込みでもアイコンが出る例 | https://oosawak.github.io/monster-awase/ |
+| セキュリティ確認サンプル | 隔離の効き目を確かめる攻撃テスト（記録・通信・親ページへのアクセス等を試し、遮断を一覧表示。暴走テストつき） | https://oosawak.github.io/html-player/?game=games/security-check/ |
 | モンスターハント | アイコン射撃場。タップと十字キー＋A/Bの両対応で、コントローラーの実験も兼ねる | https://oosawak.github.io/monster-hunt/ |
 | スターブレイカー（共通Lib） | 縦シューティング。上から来る敵と惑星を避けて撃つ。撃つとエネルギーを消費する | https://oosawak.github.io/html-player/games/star-breaker/ |
 | リングバースト（共通Lib） | 攻撃は自分の周りに広がる円だけ。ゲージが溜まったらタップで発動する | https://oosawak.github.io/html-player/games/ring-burst/ |
@@ -129,6 +130,7 @@ HP.loop(function(dt){
   - 外部へ通信できません（fetch、WebSocket、外部の画像やメディアの読み込みを禁止）。フォームの送信もできません
   - 警告ダイアログ（alert など）は出ません。タブごと他のサイトへ移動することもできません
 - 暴走検知: 共通ライブラリー（hp.js）が生存信号を送り続け、信号が途絶えたカートリッジはプレイヤーが自動で止めます。プレイヤーのボタンでオフにもできます（hp.js を使わないカートリッジは対象外です）
+- 確認用のサンプル: 攻撃テスト「セキュリティ確認サンプル」を収録しています。セレクトから選ぶと、記録・通信・親ページへのアクセスなどを実際に試して、遮断できたかどうかを一覧で表示します（暴走テストのボタンもあります）
 - URL指定の大きな外部タイトル（Cube Core Dungeon、DUNGEON//LOAD）は、それぞれのサイトを枠の中にそのまま表示しているもので、この隔離の対象外です
 - 作り手向けの決まり（フォームと入力要素の禁止、CSP の行の必須など）は [CARTRIDGE.md](CARTRIDGE.md) にあります
 
@@ -136,7 +138,7 @@ HP.loop(function(dt){
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.21（カートリッジ9本＋WASMサンプル6本収録、URL作成ツール、画面コントローラー、標準フォント付き。共有は短いURLと埋め込みURL（#p=）の両方をコピー可能）
+- バージョン: v0.22（カートリッジ9本＋WASMサンプル6本＋セキュリティ確認サンプル収録、URL作成ツール、画面コントローラー、標準フォント付き。共有は短いURLと埋め込みURL（#p=）の両方をコピー可能）
 - 内蔵カートリッジと埋め込みURLのゲームは、隔離した iframe（sandbox）＋CSPで実行します。外部への通信、フォーム送信、ダイアログ表示はできません。記録（localStorage）は他のサイトと共有されず、保存も残りません
 - hp.js を使うゲームには暴走検知が効きます（生存信号が途絶えたら自動で停止。プレイヤーのボタンでオフにできます）
 

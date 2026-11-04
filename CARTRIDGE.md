@@ -180,6 +180,7 @@ r128 の three.min.js をプレイヤー側に置いてあります。
 - モンスターハント（RPG Awesomeのアイコン使用）: games/monster-hunt/
 - スターブレイカー（hp.js使用、縦スクロールシューティング）: games/star-breaker/
 - リングバースト（hp.js使用、自動追尾弾＋円形バースト）: games/ring-burst/
+- セキュリティ確認サンプル（ゲームではなく、隔離の効き目を確かめる攻撃テスト）: games/security-check/
 
 ## ライセンス
 
