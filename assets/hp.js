@@ -51,6 +51,22 @@ var HP={
     (lines||[]).forEach(function(s,i){g.fillText(s,W/2,H/2-8+i*22)});
     g.textAlign="left";
   },
+  scene:function(defs,initial){
+    var cur=null;
+    var api={
+      cur:function(){return cur},
+      go:function(name){
+        if(cur&&defs[cur]&&defs[cur].exit)defs[cur].exit();
+        cur=name;
+        if(defs[cur]&&defs[cur].enter)defs[cur].enter();
+      },
+      frame:function(dt){
+        if(cur&&defs[cur]&&defs[cur].frame)defs[cur].frame(dt);
+      }
+    };
+    if(initial)api.go(initial);
+    return api;
+  },
   beep:function(freq,dur,type,vol){
     try{
       var C=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)());

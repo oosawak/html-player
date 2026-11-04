@@ -14,7 +14,7 @@
 </head>
 <body>
 <canvas id="cv" width="512" height="512"></canvas>
-<script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=4"></script>
 <script>
 "use strict";
 // LINE BOY — ネオンな線画プラットフォーマー（Pyxel版からの作り直し）
@@ -422,10 +422,7 @@ function drawTitle(){
   text(st,sx,sy,14,theme.ground);
   text("左右で移動／Aでジャンプ／敵は踏める",W/2,H-28,12,CGR,"center");
 }
-function step(){
-  frame++;
-  tapNow=tapA;tapA=false;
-  if(state==="title"){
+function stepTitle(){
     if(frame%3===0){
       const cols=[CG,CC,CL,CO,CP,CPU,CY];
       titlePts.push(mkParticle(ri(Math.random,10,W-10),ri(Math.random,H/2+40,H-20),
@@ -437,11 +434,11 @@ function step(){
     if(HP.left()&&!step._pl){world=(world+THEMES.length-1)%THEMES.length;HP.beep(660,0.05,"square",0.03)}
     if(HP.right()&&!step._pr){world=(world+1)%THEMES.length;HP.beep(660,0.05,"square",0.03)}
     step._pl=HP.left();step._pr=HP.right();
-    if(aHit()){state="play";startLevel()}
+    if(aHit()){go("play");startLevel()}
     drawTitle();
     return;
-  }
-  if(state==="over"||state==="clear"){
+}
+function stepEnd(){
     overTimer++;
     for(const p of parts)updParticle(p);
     parts=parts.filter(p=>p.life>0);
@@ -454,23 +451,24 @@ function step(){
     if(state==="over"){
       text("GAME OVER",W/2,H/2-10,30,CR,"center");
       if(overTimer>60)text("Aボタンでタイトルへ",W/2,H/2+24,14,CW,"center");
-      if(overTimer>60&&aHit())state="title";
+      if(overTimer>60&&aHit())go("title");
     }else{
       text("CLEAR!",W/2,H/2-10,30,CY,"center");
       text("スコア "+(scoreTotal+player.score),W/2,H/2+20,14,CW,"center");
       if(overTimer>60)text("Aボタンで次のワールドへ",W/2,H/2+44,13,CW,"center");
       if(overTimer>60&&aHit()){
         scoreTotal+=player.score;world=(world+1)%THEMES.length;
-        state="play";startLevel();
+        go("play");startLevel();
       }
     }
     return;
-  }
+}
+function stepPlay(){
   // play
   const lv=level,p=player,col=THEMES[world].ground;
   if(!bossOn&&p.x>LEVEL_W-400){bossOn=true;shake=20}
   updPlayer(p,lv.data,lv.enemies,lv.items,bossOn?boss:null,parts,col);
-  if(!p.alive){shake=15;state="over";overTimer=0;drawPlay();return}
+  if(!p.alive){shake=15;go("over");overTimer=0;drawPlay();return}
   if(bossOn&&boss.alive){
     updBoss(boss,p);
     if(frame%3===0){
@@ -486,7 +484,7 @@ function step(){
     for(let i=0;i<20;i++)parts.push(mkParticle(boss.x,boss.y,rr(Math.random,-4,4),rr(Math.random,-5,0),boss.col,45,2,0.1));
     HP.beep(220,0.2,"square",0.05);
   }
-  if(bossOn&&!boss.alive&&p.x>=lv.goalX){state="clear";overTimer=0;drawPlay();return}
+  if(bossOn&&!boss.alive&&p.x>=lv.goalX){go("clear");overTimer=0;drawPlay();return}
   for(const e of lv.enemies)if(e.alive)updEnemy(e,lv.data.segs,lv.data.plats);
   for(const pt of parts)updParticle(pt);
   parts=parts.filter(pt=>pt.life>0);
@@ -494,6 +492,13 @@ function step(){
   camX+=(target-camX)*0.12;
   if(shake>0)shake--;
   drawPlay();
+}
+const SC=HP.scene({title:{frame:stepTitle},play:{frame:stepPlay},over:{frame:stepEnd},clear:{frame:stepEnd}},"title");
+function go(name){state=name;SC.go(name)}
+function step(){
+  frame++;
+  tapNow=tapA;tapA=false;
+  SC.frame();
 }
 function drawPlay(){
   g.save();

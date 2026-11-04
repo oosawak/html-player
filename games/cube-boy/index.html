@@ -14,7 +14,7 @@
 </head>
 <body>
 <canvas id="cv" width="512" height="512"></canvas>
-<script src="https://oosawak.github.io/html-player/assets/hp.js"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=4"></script>
 <script>
 "use strict";
 // CubeBoy — ダッシュと壁ジャンプの小さなプラットフォーマー（Pyxel版からの作り直し）
@@ -233,7 +233,7 @@ function resetGame(){
   roomX=0;roomY=0;roomsData=new Map();collectedRooms=new Set();collected=0;
   countdown=0;deathTimer=0;shake=0;parts=[];
   player=mkPlayer(64,64);boss=mkBoss();
-  state="play";
+  go("play");
   enterRoom();
 }
 function drawBG(){
@@ -344,15 +344,12 @@ function drawTitle(){
 function burst(x,y,col,n,pow){
   for(let i=0;i<n;i++)parts.push({x,y,dx:Math.random()*pow*2-pow,dy:Math.random()*pow*2-pow,col,life:20});
 }
-function step(){
-  frame++;
-  tapNowA=tapA;tapNowB=tapB;tapA=false;tapB=false;
-  if(state==="title"){
+function stepTitle(){
     drawTitle();
     if(HP.aHit()||tapNowA)resetGame();
     return;
-  }
-  if(state==="over"||state==="clear"){
+}
+function stepEnd(){
     drawScene();
     g.setTransform(4,0,0,4,0,0);
     g.font="700 11px \"HP Sans\",sans-serif";g.textAlign="center";
@@ -369,18 +366,19 @@ function step(){
     g.textAlign="left";g.setTransform(1,0,0,1,0,0);
     if(HP.aHit()||tapNowA)resetGame();
     return;
-  }
-  if(state==="overseq"){
+}
+function stepSeq(){
     deathTimer--;shake=5;
     boss&&boss.spawned&&updBoss(boss,player);
     burst(player.x+2+Math.random()*4,player.y+2+Math.random()*4,
       [C_WHITE,C_CYAN,"#00BFFF"][(Math.random()*3)|0],3,2);
     for(const p of parts){p.x+=p.dx;p.y+=p.dy;p.life--}
     parts=parts.filter(p=>p.life>0);
-    if(deathTimer<=0){state="over";shake=0}
+    if(deathTimer<=0){go("over");shake=0}
     drawScene();
     return;
-  }
+}
+function stepMain(){
   // play / boss
   dashShake=false;
   updPlayer(player,parts);
@@ -395,7 +393,7 @@ function step(){
     player.x=64;player.y=64;player.vx=0;player.vy=0;player.dead=false;
   }
   if(state==="boss"&&roomX===0&&roomY===0){
-    if(Math.abs(player.x-64)<8&&Math.abs(player.y-64)<8){state="clear";drawScene();return}
+    if(Math.abs(player.x-64)<8&&Math.abs(player.y-64)<8){go("clear");drawScene();return}
   }
   if(state==="boss"){
     if(countdown>0){
@@ -405,7 +403,7 @@ function step(){
       updBoss(boss,player);
       if(player.x<boss.x+boss.w&&player.x+player.w>boss.x&&
          player.y<boss.y+boss.h&&player.y+player.h>boss.y){
-        player.dead=true;shake=15;state="overseq";deathTimer=150;
+        player.dead=true;shake=15;go("overseq");deathTimer=150;
         HP.beep(140,0.25,"sawtooth",0.05);
         burst(player.x+2,player.y+2,C_WHITE,40,4);
         drawScene();return;
@@ -433,13 +431,20 @@ function step(){
         HP.beep(880,0.06,"square",0.04);
         burst(o.x+4,o.y+4,C_YEL,5,2);
         shake=Math.max(shake,2);
-        if(collected>=3&&state==="play"){state="boss";countdown=300}
+        if(collected>=3&&state==="play"){go("boss");countdown=300}
       }
     }
   }
   for(const p of parts){p.x+=p.dx;p.y+=p.dy;p.life--}
   parts=parts.filter(p=>p.life>0);
   drawScene();
+}
+const SC=HP.scene({title:{frame:stepTitle},main:{frame:stepMain},overseq:{frame:stepSeq},over:{frame:stepEnd},clear:{frame:stepEnd}},"title");
+function go(name){state=name;SC.go(name==="boss"?"main":name)}
+function step(){
+  frame++;
+  tapNowA=tapA;tapNowB=tapB;tapA=false;tapB=false;
+  SC.frame();
 }
 // fixed-step loop (30Hz, same feel as the original)
 player=mkPlayer(64,64);boss=mkBoss();tm=genRoom(0,0);

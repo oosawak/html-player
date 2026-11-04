@@ -111,7 +111,7 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 ### hp.js（2D向けの小さな共通部品）
 
 ```html
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=3"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=4"></script>
 ```
 
 - `HP.loop(function(dt){ ... })` — ゲームループ。dt は前フレームからの秒数
@@ -122,6 +122,7 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 - `HP.text(g, s, x, y, size, color, align, font)` — 文字を描く（UI部品）
 - `HP.panel(g, x, y, w, h, fill, stroke)` — パネルを描く（UI部品）
 - `HP.title(g, W, H, title, lines, color)` — タイトル画面を描く（UI部品）
+- `HP.scene(defs, initial)` — シーン遷移。`{名前: {enter, frame(dt), exit}}` の形で場面を登録し、`go(名前)` で切り替え、`frame(dt)` で今の場面を進める（タイトル→プレイ→結果、の型）
 - `HP.beep(freq, dur, type, vol)` — 簡単な効果音（WebAudio）
 - hp.js は読み込まれている間、プレイヤーへ生存信号を送ります。ゲームの処理が止まって信号が途絶えると、プレイヤーの暴走検知がカートリッジを停止します（プレイヤー側でオフにできます）
 
@@ -129,11 +130,10 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 
 方針： ゲームを作るたびに「また同じものを書いた」と気づいた部分を、部品として hp.js に上げていきます。部品が増えるほど、ゲーム側のコードは小さくなります。利用は任意で、使わないゲームがあっても構いません（部品はシステム側が持ち、ゲームは必要なものだけ読み込む形を守ります）。
 
-いまある部品： メインループ、入力（十字キー／A／B）、SE、ゲージ・文字・パネル・タイトル画面、暴走検知の生存信号。
+いまある部品： メインループ、入力（十字キー／A／B）、SE、ゲージ・文字・パネル・タイトル画面、シーン遷移、暴走検知の生存信号。
 
 これから足す計画の部品：
 
-- **シーン遷移**: タイトル→プレイ→結果、といった画面の切り替えの型
 - **当たり判定**: 四角同士、円同士、点と四角の重なり判定
 - **音楽**: SEの単発ではなく、メロディ（曲）を流す仕組み
 - **スプライトとアニメーション**: 絵を部品として描く仕組み。画像ファイルを持たない形として、ドット絵を文字列データで定義して描く方式を想定。コマ送りのアニメーションも含む
