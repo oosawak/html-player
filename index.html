@@ -24,7 +24,15 @@
   .vtab { background:#3a2a1a; color:#c9b48a; border:1px solid #8a6b3f; border-bottom:none; border-radius:8px 8px 0 0; padding:6px 18px; font-size:13px; }
   .vtab.on { background:#7c2128; color:#fff; }
   #screen { position:relative; }
-  iframe { display:block; width:100%; height:60vh; border:0; background:#111; }
+  iframe { display:block; width:100%; height:72vh; border:0; background:#111; }
+  #listwrap { position:absolute; inset:0; display:none; overflow:auto; background:#20140e; padding:10px; box-sizing:border-box; z-index:4; }
+  #listwrap.on { display:block; }
+  #listgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .gcard { background:#2b1a12; border:1px solid #8a6b3f; border-radius:8px; overflow:hidden; cursor:pointer; padding:0; text-align:left; font-family:inherit; color:#f3e9d2; }
+  .gcard img { display:block; width:100%; aspect-ratio:4/5; object-fit:cover; object-position:top; background:#111; }
+  .gcard .gt { display:block; padding:6px 8px 2px; font-size:13px; line-height:1.4; letter-spacing:0; }
+  .gcard .gs { display:block; padding:0 8px 8px; font-size:11px; color:#c9b48a; }
+  .gcard.cur { border-color:#d8b46a; box-shadow:0 0 0 2px #7c2128; }
   #srcwrap { position:absolute; inset:0; display:none; flex-direction:column; gap:8px; background:#20140e; padding:10px; box-sizing:border-box; z-index:4; }
   #srcwrap.on { display:flex; }
   #srcview { flex:1; resize:none; }
@@ -48,7 +56,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.38</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.39</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -66,6 +74,7 @@
   </div>
   <div id="stage">
     <div id="viewtabs">
+      <button id="tablist" class="vtab">一覧</button>
       <button id="tabgame" class="vtab on">ゲーム</button>
       <button id="tabsrc" class="vtab">ソース</button>
     </div>
@@ -77,6 +86,9 @@
       </div>
       <div class="info" id="srcinfo"></div>
       <textarea id="srcview" readonly placeholder="ここにカートリッジのソース（HTML）が表示されます"></textarea>
+    </div>
+    <div id="listwrap">
+      <div id="listgrid"></div>
     </div>
     </div>
   </div>
@@ -166,7 +178,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=38" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=39" : url; // プレイヤー更新時にカートリッジも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -331,14 +343,43 @@ const srcview = document.getElementById("srcview");
 const srcinfo = document.getElementById("srcinfo");
 const tabgame = document.getElementById("tabgame");
 const tabsrc = document.getElementById("tabsrc");
-function setView(src){
-  srcwrap.classList.toggle("on", !!src);
-  tabgame.classList.toggle("on", !src);
-  tabsrc.classList.toggle("on", !!src);
+const tablist = document.getElementById("tablist");
+const listwrap = document.getElementById("listwrap");
+function setView(mode){
+  srcwrap.classList.toggle("on", mode === "src");
+  listwrap.classList.toggle("on", mode === "list");
+  tabgame.classList.toggle("on", mode === "game");
+  tabsrc.classList.toggle("on", mode === "src");
+  tablist.classList.toggle("on", mode === "list");
 }
-function hideSource(){ setView(false); }
+function hideSource(){ setView("game"); }
+let listBuilt = false;
+function markCurrent(){
+  document.querySelectorAll(".gcard").forEach(c => c.classList.toggle("cur", c.dataset.game === currentGame));
+}
+function buildList(){
+  if(listBuilt){ markCurrent(); return; }
+  listBuilt = true;
+  const grid = document.getElementById("listgrid");
+  for(const o of cart.options){
+    const b = document.createElement("button");
+    b.className = "gcard"; b.dataset.game = o.value;
+    const img = document.createElement("img");
+    img.src = "assets/thumbs/" + o.value.replace(/^games\//, "").replace(/\/$/, "") + ".jpg";
+    img.alt = o.textContent; img.loading = "lazy";
+    const gt = document.createElement("span"); gt.className = "gt"; gt.textContent = o.textContent;
+    const gs = document.createElement("span"); gs.className = "gs";
+    const p = PAYLOADS[o.value];
+    gs.textContent = p ? ("埋め込みURL " + p.length.toLocaleString("ja-JP") + "文字" + (p.length <= 4096 ? "（4,096字以内）" : "（4,096字超え）")) : "埋め込みURLなし";
+    b.append(img, gt, gs);
+    b.onclick = () => { selectCartridge(o.value); load(o.value); };
+    grid.appendChild(b);
+  }
+  markCurrent();
+}
+function showList(){ buildList(); setView("list"); }
 async function showSource(){
-  setView(true);
+  setView("src");
   if(!currentSource && currentGame){
     srcinfo.textContent = "ソースを読み込んでいます…";
     srcview.value = "";
@@ -351,6 +392,7 @@ async function showSource(){
 }
 tabgame.onclick = hideSource;
 tabsrc.onclick = showSource;
+tablist.onclick = showList;
 document.getElementById("srccopy").onclick = async () => {
   if(!srcview.value) return;
   try { await navigator.clipboard.writeText(srcview.value); alert("ソースをコピーしました"); }
