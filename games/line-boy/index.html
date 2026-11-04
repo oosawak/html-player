@@ -167,28 +167,130 @@ function drawEnemy(e,camX){
   nLine(sx-3,sy+S,sx-3+leg,sy+S+4,e.col,null);
   nLine(sx+3,sy+S,sx+3-leg,sy+S+4,e.col,null);
 }
-function mkBoss(x,y,col){return {x,y,col,hp:5,vx:1.5,alive:true,flash:0,size:40,timer:0}}
+function mkBoss(x,y,col,kind){
+  const trail=[];
+  for(let i=0;i<110;i++)trail.push({x:x+i*1.6,y:y+Math.sin(i*0.15)*7});
+  return {x,y,col,kind,hp:5,vx:1.5,alive:true,flash:0,size:40,timer:0,ang:Math.PI,trail};
+}
 function updBoss(b,p){
   b.timer++;
   const dx=(p.x+PW/2)-b.x,dy=(p.y+PH/2)-b.y,dist=Math.hypot(dx,dy);
-  if(dist>0){const sp=1.2+b.timer*0.001;b.x+=dx/dist*sp;b.y+=dy/dist*sp}
+  if(dist>0){b.ang=Math.atan2(dy,dx);const sp=1.2+b.timer*0.001;b.x+=dx/dist*sp;b.y+=dy/dist*sp}
+  b.trail.unshift({x:b.x,y:b.y});
+  if(b.trail.length>110)b.trail.pop();
   if(b.flash>0)b.flash--;
 }
+function drawBossTrail(b,camX,bodyCol,spikeCol){
+  const tr=b.trail;
+  for(let i=tr.length-6;i>=10;i-=6){
+    const p=tr[i],t=i/tr.length,r=Math.max(3.5,15*(1-t*0.7));
+    const sx=(p.x-camX)|0,sy=p.y|0;
+    nCircb(sx,sy,r,bodyCol,CGR);
+    if(spikeCol!=null){
+      nLine(sx,sy-r,sx+3,sy-r-7,spikeCol,null);
+      nLine(sx+3,sy-r-7,sx+6,sy-r+1,spikeCol,null);
+    }else{
+      pset(sx-2,sy-3,CL);
+    }
+  }
+}
 function drawBoss(b,camX){
-  const sx=(b.x-camX)|0,sy=b.y|0,r=b.size;
-  const col=(b.flash%2===1)?CW:b.col;
-  nCircb(sx,sy,r+6,CGR);nCircb(sx,sy,r+4,(b.flash%2===0)?CB:col);
-  nCircb(sx,sy,r,col,CGR);
-  nLine(sx-r+4,sy,sx+r-4,sy,col,null);nLine(sx,sy-r+4,sx,sy+r-4,col,null);
-  for(let i=0;i<8;i++){
-    const a=i/8*Math.PI*2+b.timer*0.05;
-    g.strokeStyle=PAL[col];
-    g.strokeRect(sx+Math.cos(a)*(r-8)-4,sy+Math.sin(a)*(r-8)-4,8,8);
+  const sx=(b.x-camX)|0,sy=b.y|0;
+  const flash=b.flash%2===1;
+  const col=flash?CW:b.col;
+  const ca=Math.cos(b.ang),sa=Math.sin(b.ang);
+  const P=(fx,fy)=>[sx+ca*fx-sa*fy,sy+sa*fx+ca*fy];
+  if(b.kind===0){
+    // 巨木の精（FOREST）: 葉の冠＋幹の顔＋枝の腕
+    const trunk=flash?CW:CBR, leaf=flash?CW:CG;
+    nLine(sx-8,sy+2,sx-26,sy-8,trunk,null);nLine(sx-26,sy-8,sx-33,sy-14,trunk,null);nLine(sx-26,sy-8,sx-31,sy-2,trunk,null);
+    nLine(sx+8,sy+2,sx+26,sy-8,trunk,null);nLine(sx+26,sy-8,sx+33,sy-14,trunk,null);nLine(sx+26,sy-8,sx+31,sy-2,trunk,null);
+    nLine(sx-9,sy-14,sx-11,sy+24,trunk,null);nLine(sx+9,sy-14,sx+11,sy+24,trunk,null);
+    nLine(sx-11,sy+24,sx-17,sy+30,trunk,null);nLine(sx+11,sy+24,sx+17,sy+30,trunk,null);
+    nLine(sx-11,sy+24,sx+11,sy+24,trunk,null);
+    nLine(sx-3,sy-8,sx-4,sy+16,CGR,null);nLine(sx+4,sy-4,sx+3,sy+12,CGR,null);
+    nCircb(sx,sy-30,17,leaf,CL);nCircb(sx-15,sy-22,12,leaf,CL);nCircb(sx+15,sy-22,12,leaf,CL);nCircb(sx,sy-20,13,leaf,null);
+    pset(sx-5,sy+2,CY);pset(sx+5,sy+2,CY);
+    nLine(sx-4,sy+10,sx+4,sy+10,CY,null);
+  }else if(b.kind===1){
+    // 太陽の化身（DESERT）: 回る光の棘＋怒った顔
+    for(let i=0;i<12;i++){
+      const a=i/12*Math.PI*2+b.timer*0.02,len=(i%2===0)?20:12;
+      nLine(sx+Math.cos(a)*30,sy+Math.sin(a)*30,sx+Math.cos(a)*(30+len),sy+Math.sin(a)*(30+len),CO,CY);
+    }
+    nCircb(sx,sy,30,col,CY);
+    nCircb(sx,sy,23,CY,null);
+    nLine(sx-15,sy-8,sx-5,sy-4,col,null);nLine(sx+15,sy-8,sx+5,sy-4,col,null);
+    pset(sx-10,sy-2,CW);pset(sx+10,sy-2,CW);
+    for(let i=0;i<4;i++){
+      const zx=sx-12+i*8;
+      nLine(zx,sy+10,zx+4,sy+15,col,null);nLine(zx+4,sy+15,zx+8,sy+10,col,null);
+    }
+  }else if(b.kind===2){
+    // 大コウモリ（CAVE）: 羽ばたく翼＋耳と牙
+    const flap=Math.sin(b.timer*0.25)*8;
+    for(const dir of [-1,1]){
+      const pts=[[-8,-4],[-30,-16-flap],[-38,0],[-26,2],[-34,10-flap*0.5],[-20,8],[-9,4]];
+      g.strokeStyle=PAL[flash?CW:CPU];g.beginPath();
+      pts.forEach(([px,py],i)=>{const X=sx+px*dir,Y=sy+py;i?g.lineTo(X,Y):g.moveTo(X,Y)});
+      g.stroke();
+      g.strokeStyle=PAL[CP];g.beginPath();
+      g.moveTo(sx-8*dir,sy-4);g.lineTo(sx-30*dir,sy-16-flap);g.stroke();
+    }
+    nCircb(sx,sy,15,col,CP);
+    nCircb(sx,sy,10,CP,null);
+    nLine(sx-9,sy-11,sx-5,sy-23,col,null);nLine(sx-5,sy-23,sx-2,sy-12,col,null);
+    nLine(sx+9,sy-11,sx+5,sy-23,col,null);nLine(sx+5,sy-23,sx+2,sy-12,col,null);
+    pset(sx-6,sy-2,CR);pset(sx+6,sy-2,CR);
+    nLine(sx-4,sy+7,sx-3,sy+12,CW,null);nLine(sx+4,sy+7,sx+3,sy+12,CW,null);
+  }else if(b.kind===3){
+    // 大おばけ（GHOST）: 波打つ裾＋黒い目と口
+    const body=flash?CP:CW,wob=Math.sin(b.timer*0.15)*2;
+    g.strokeStyle=PAL[body];g.beginPath();
+    g.moveTo(sx-24,sy+26);
+    g.lineTo(sx-24,sy-2);
+    g.arc(sx,sy-2,24,Math.PI,0);
+    g.lineTo(sx+24,sy+26);
+    for(let i=0;i<4;i++){
+      const x0=sx+24-i*12;
+      g.quadraticCurveTo(x0-3,sy+26+((i%2===0)?5:-3)+wob*0.3,x0-12,sy+26);
+    }
+    g.fillStyle="rgba(240,240,255,0.20)";g.fill();
+    g.stroke();
+    nLine(sx-24,sy+6,sx-33,sy+12+wob,body,null);
+    nLine(sx+24,sy+6,sx+33,sy+12-wob,body,null);
+    g.fillStyle=PAL[CB];
+    g.beginPath();g.ellipse(sx-9,sy-4,3.5,5.5,0,0,7);g.fill();
+    g.beginPath();g.ellipse(sx+9,sy-4,3.5,5.5,0,0,7);g.fill();
+    g.beginPath();g.ellipse(sx,sy+8,4,6.5,0,0,7);g.fill();
+  }else{
+    // ドラゴン（VOLCANO）: 棘のある胴体＋角と翼のある頭
+    drawBossTrail(b,camX,CR,CO);
+    const neck=b.trail[Math.min(10,b.trail.length-1)];
+    if(neck){
+      const nx=(neck.x-camX)|0,ny=neck.y|0,flap=Math.sin(b.timer*0.3)*6;
+      g.strokeStyle=PAL[CO];g.beginPath();
+      g.moveTo(nx,ny-6);g.lineTo(nx-16,ny-26-flap);g.lineTo(nx-6,ny-14);g.lineTo(nx+4,ny-28-flap);g.lineTo(nx+8,ny-8);
+      g.stroke();
+    }
+    nCircb(sx,sy,15,flash?CW:CR,CO);
+    const [ux,uy]=P(14,-10),[tipx,tipy]=P(30,-3),[lwx,lwy]=P(14,8),[tip2x,tip2y]=P(26,5);
+    nLine(ux,uy,tipx,tipy,CR,null);nLine(lwx,lwy,tip2x,tip2y,CR,null);
+    nLine(tipx,tipy,tip2x,tip2y,CR,null);
+    for(let i=0;i<3;i++){
+      const [bx,by]=P(18+i*4,-4),[ex2,ey2]=P(18+i*4,1);
+      nLine(bx,by,ex2,ey2,CW,null);
+    }
+    const [h1x,h1y]=P(-6,-12),[h2x,h2y]=P(-20,-22),[h3x,h3y]=P(-24,-10);
+    nLine(h1x,h1y,h2x,h2y,CY,null);nLine(h2x,h2y,h3x,h3y,CY,null);
+    const [eyex,eyey]=P(6,-5);
+    pset(eyex,eyey,CY);
+    const [b1x,b1y]=P(1,-10),[b2x,b2y]=P(11,-8);
+    nLine(b1x,b1y,b2x,b2y,CO,null);
+    const [nx2,ny2]=P(27,-1);
+    pset(nx2,ny2,CO);
   }
-  for(let i=0;i<6;i++){
-    const a2=i/6*Math.PI*2-b.timer*0.08;
-    pset(sx+Math.cos(a2)*(r-20),sy+Math.sin(a2)*(r-20),CW);
-  }
+  if(flash){nCircb(sx,sy,10,CW,null)}
 }
 
 // --- player ---
@@ -311,7 +413,7 @@ function startLevel(){
   level={data,goalX:LEVEL_W-80,enemies:data.enemies.map(e=>mkEnemy(e[0],e[1],THEMES[world].accent)),items:data.items.slice()};
   const startY=level.data.segs.length?level.data.segs[0][1]:H-160;
   player=mkPlayer(60,startY-PH-2);
-  boss=mkBoss(LEVEL_W-200,startY-80,THEMES[world].ground);
+  boss=mkBoss(LEVEL_W-200,startY-80,THEMES[world].ground,world);
   parts=[];camX=0;shake=0;bossOn=false;overTimer=0;
 }
 function drawBG(){
