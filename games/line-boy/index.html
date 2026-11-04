@@ -180,18 +180,20 @@ function updBoss(b,p){
   if(b.trail.length>110)b.trail.pop();
   if(b.flash>0)b.flash--;
 }
-function drawBossTrail(b,camX,bodyCol,spikeCol){
+function drawBossTrailSq(b,camX,bodyCol,spikeCol){
   const tr=b.trail;
   for(let i=tr.length-6;i>=10;i-=6){
-    const p=tr[i],t=i/tr.length,r=Math.max(3.5,15*(1-t*0.7));
-    const sx=(p.x-camX)|0,sy=p.y|0;
-    nCircb(sx,sy,r,bodyCol,CGR);
+    const p=tr[i],q=tr[Math.max(0,i-6)],t=i/tr.length;
+    const half=Math.max(2.5,15*(1-t*0.7));
+    const ang=Math.atan2(p.y-q.y,p.x-q.x);
+    g.save();g.translate(p.x-camX,p.y);g.rotate(ang);
+    g.strokeStyle=PAL[CGR];g.strokeRect(-half-1,-half-1,(half+1)*2,(half+1)*2);
+    g.strokeStyle=PAL[bodyCol];g.strokeRect(-half,-half,half*2,half*2);
     if(spikeCol!=null){
-      nLine(sx,sy-r,sx+3,sy-r-7,spikeCol,null);
-      nLine(sx+3,sy-r-7,sx+6,sy-r+1,spikeCol,null);
-    }else{
-      pset(sx-2,sy-3,CL);
+      g.strokeStyle=PAL[spikeCol];
+      g.beginPath();g.moveTo(-3,-half);g.lineTo(0,-half-7);g.lineTo(3,-half);g.stroke();
     }
+    g.restore();
   }
 }
 function drawBoss(b,camX){
@@ -262,8 +264,8 @@ function drawBoss(b,camX){
     g.beginPath();g.ellipse(sx+9,sy-4,3.5,5.5,0,0,7);g.fill();
     g.beginPath();g.ellipse(sx,sy+8,4,6.5,0,0,7);g.fill();
   }else{
-    // ドラゴン（VOLCANO）: 棘のある胴体＋角と翼のある頭
-    drawBossTrail(b,camX,CR,CO);
+    // ドラゴン（VOLCANO）: □ベースの胴体と頭（2026-11-05 本人の指示）
+    drawBossTrailSq(b,camX,flash?CW:CR,CO);
     const neck=b.trail[Math.min(10,b.trail.length-1)];
     if(neck){
       const nx=(neck.x-camX)|0,ny=neck.y|0,flap=Math.sin(b.timer*0.3)*6;
@@ -271,21 +273,21 @@ function drawBoss(b,camX){
       g.moveTo(nx,ny-6);g.lineTo(nx-16,ny-26-flap);g.lineTo(nx-6,ny-14);g.lineTo(nx+4,ny-28-flap);g.lineTo(nx+8,ny-8);
       g.stroke();
     }
-    nCircb(sx,sy,15,flash?CW:CR,CO);
-    const [ux,uy]=P(14,-10),[tipx,tipy]=P(30,-3),[lwx,lwy]=P(14,8),[tip2x,tip2y]=P(26,5);
-    nLine(ux,uy,tipx,tipy,CR,null);nLine(lwx,lwy,tip2x,tip2y,CR,null);
-    nLine(tipx,tipy,tip2x,tip2y,CR,null);
-    for(let i=0;i<3;i++){
-      const [bx,by]=P(18+i*4,-4),[ex2,ey2]=P(18+i*4,1);
-      nLine(bx,by,ex2,ey2,CW,null);
-    }
-    const [h1x,h1y]=P(-6,-12),[h2x,h2y]=P(-20,-22),[h3x,h3y]=P(-24,-10);
+    const hs=17;
+    g.save();g.translate(sx,sy);g.rotate(b.ang);
+    g.strokeStyle=PAL[CO];g.strokeRect(-hs-1,-hs-1,(hs+1)*2,(hs+1)*2);
+    g.strokeStyle=PAL[flash?CW:CR];g.strokeRect(-hs,-hs,hs*2,hs*2);
+    g.strokeRect(hs-2,-8,16,16);
+    g.strokeStyle=PAL[CW];
+    for(let i=0;i<3;i++)g.strokeRect(hs+2+i*5,-6,3,5);
+    g.restore();
+    const [h1x,h1y]=P(-8,-12),[h2x,h2y]=P(-22,-24),[h3x,h3y]=P(-26,-10);
     nLine(h1x,h1y,h2x,h2y,CY,null);nLine(h2x,h2y,h3x,h3y,CY,null);
-    const [eyex,eyey]=P(6,-5);
-    pset(eyex,eyey,CY);
-    const [b1x,b1y]=P(1,-10),[b2x,b2y]=P(11,-8);
+    const [eyex,eyey]=P(4,-6);
+    rect(eyex-2,eyey-2,4,4,CY);
+    const [b1x,b1y]=P(-2,-11),[b2x,b2y]=P(10,-8);
     nLine(b1x,b1y,b2x,b2y,CO,null);
-    const [nx2,ny2]=P(27,-1);
+    const [nx2,ny2]=P(31,0);
     pset(nx2,ny2,CO);
   }
   if(flash){nCircb(sx,sy,10,CW,null)}
