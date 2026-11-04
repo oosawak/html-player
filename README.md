@@ -21,7 +21,7 @@
 
 | 配り方 | 縛り |
 |---|---|
-| URL指定（?game=） | 実質なし。ブラウザで動くHTMLならそのまま使えます |
+| 内蔵カートリッジ | リポジトリに同梱して収録する形です |
 | URL埋め込み（#p=） | ゲーム本体を1ファイルに収め、圧縮して約3KBが目安（URL全体をXの4,096文字に収める場合）。ブラウザで開くだけなら、もう少し大きくても動きます |
 
 ## 共通部品はプレイヤー側が持つ
@@ -81,27 +81,21 @@ HP.loop(function(dt){
 | 一騎討ち ― 刹那の一閃 | 「！」で斬る反射神経の決闘、5人抜き | https://oosawak.github.io/ikkiuchi/ |
 | 一人麻雀 | ツモって切って和了を目指す一人打ち | https://oosawak.github.io/hitori-mahjong/ |
 | 上海 ― 牌消し | 同じ牌のペアを消していくパズル | https://oosawak.github.io/shanghai/ |
-| Cube Core Dungeon | 3Dダンジョン（約90KB）。埋め込みではなくURL指定で差す大型カートリッジの例 | https://oosawak.github.io/CubeCoreDungeon/ |
-| DUNGEON//LOAD | Rust/WASMのダンジョン（外部ファイル・CDN併用の大型例、URL指定） | https://oosawak.github.io/rustgames/play/dungeonload/index.html |
-| Neon Maze（WASM） | rustgames の小さなWASMゲームの例（2Dの迷路） | https://oosawak.github.io/rustgames/play/maze.html |
-| Neon Maze 3D（WASM） | 同じ迷路の3D版。2Dと3Dで見せ方を替える例 | https://oosawak.github.io/rustgames/play/maze3d/index.html |
-| Animal Doku（WASM） | rustgames の小さなWASMパズル | https://oosawak.github.io/rustgames/play/animal-puzzle/index.html |
-| Earth Defense（WASM） | rustgames の小さなWASMゲーム（地球防衛） | https://oosawak.github.io/rustgames/play/earthdef/index.html |
-| LINE BOY（WASM） | Pyxel（Python）製のアクション。WASMで動く大きな1ファイル（約12MB） | https://oosawak.github.io/Lineboy/lineboy.html |
-| CubeBoy（WASM） | Pyxel（Python）製。WASMで動く大きな1ファイル（約10MB） | https://oosawak.github.io/Cubeboy/Cubeboy.html |
 | モンスターあわせ | アイコン神経衰弱。RPG Awesomeをプレイヤー供給で使い、埋め込みでもアイコンが出る例 | https://oosawak.github.io/monster-awase/ |
-| セキュリティ確認サンプル | 隔離の効き目を確かめる攻撃テスト（記録・通信・親ページへのアクセス等を試し、遮断を一覧表示。暴走テストつき） | https://oosawak.github.io/html-player/?game=games/security-check/ |
+| セキュリティ確認サンプル | 隔離の効き目を確かめる攻撃テスト（記録・通信・親ページへのアクセス等を試し、遮断を一覧表示。暴走テストつき） | https://oosawak.github.io/html-player/#g=games/security-check/ |
 | モンスターハント | アイコン射撃場。タップと十字キー＋A/Bの両対応で、コントローラーの実験も兼ねる | https://oosawak.github.io/monster-hunt/ |
 | スターブレイカー（共通Lib） | 縦シューティング。上から来る敵と惑星を避けて撃つ。撃つとエネルギーを消費する | https://oosawak.github.io/html-player/games/star-breaker/ |
 | リングバースト（共通Lib） | 攻撃は自分の周りに広がる円だけ。ゲージが溜まったらタップで発動する | https://oosawak.github.io/html-player/games/ring-burst/ |
 
 ## カートリッジの配り方（2形式）
 
-### 1. URL指定（?game=）
+### 1. 内蔵カートリッジとして収録する
 
-`https://oosawak.github.io/html-player/?game=<ゲームのURL>`
+このリポジトリの games/ に置き、プレイヤーのセレクトに登録する形です。カートリッジへの直接リンクは `#g=` 形式で、`https://oosawak.github.io/html-player/#g=games/<名前>/` のように書きます（指定できるのは収録済みカートリッジだけです）。
 
-ゲーム本体は置かれた場所のまま、プレイヤーが読み込みます。サイズ制限はありません。
+外部のURLを指定して読み込む形式（旧 ?game=）は、v0.26 で廃止しました。プレイヤーが読むのは、内蔵カートリッジと、次の埋め込みURLだけです。
+
+WASMのゲームがこのプレイヤーで動くことは確認済みです。ただし、カートリッジとして受け付けるのはHTMLのみとします。WASMは、提供側が用意した部品（エンジン）としてだけ使う方針です。
 
 ### 2. URL埋め込み（#p=）
 
@@ -114,10 +108,8 @@ HP.loop(function(dt){
 ## カートリッジの作り方
 
 1. HTMLファイル1枚で動くゲームを作る（外部ファイルに依存しない形が理想）
-2. 公開できるURLに置く（GitHub Pages など）
-3. プレイヤーの「URLを指定する」から読み込めば、その場で遊べます。共有は `?game=` 形式のURLで
-
-プレイヤー左上のセレクトへの登録は、このリポジトリの index.html の選択肢への追加です。
+2. 下のURL作成ツールで埋め込みURL（#p=）を作れば、置き場所なしでそのまま配れます
+3. プレイヤーに収録する場合は、このリポジトリの games/ に置き、index.html のセレクトへ登録します
 
 カートリッジ作りの仕様書は [CARTRIDGE.md](CARTRIDGE.md) です。作りたいゲームを書くための雛形は [TEMPLATE.md](TEMPLATE.md) です（記入例つき）。AIに読ませて作らせる使い方を想定しています。入力の約束（十字キー＝矢印キー、A＝Space、B＝KeyX）と、プレイヤー内蔵の画面コントローラーの仕様もここにあります。
 
@@ -125,20 +117,19 @@ HP.loop(function(dt){
 
 カートリッジは「誰が作ったか分からないHTML」かもしれない、という前提で実行します。
 
-- 内蔵カートリッジと、埋め込みURL（#p=）のゲームは、隔離した枠（iframe の sandbox、同一オリジンの許可なし）と通信ポリシー（CSP）の中で実行します
+- すべてのカートリッジは、隔離した枠（iframe の sandbox、同一オリジンの許可なし）と通信ポリシー（CSP）の中で実行します
   - プレイヤーのページや、他のサイトの記録（localStorage）に触れられません。ゲームの記録の保存も、プレイヤーの中では残りません
   - 外部へ通信できません（fetch、WebSocket、外部の画像やメディアの読み込みを禁止）。フォームの送信もできません
   - 警告ダイアログ（alert など）は出ません。タブごと他のサイトへ移動することもできません
 - 暴走検知: 共通ライブラリー（hp.js）が生存信号を送り続け、信号が途絶えたカートリッジはプレイヤーが自動で止めます。プレイヤーのボタンでオフにもできます（hp.js を使わないカートリッジは対象外です）
 - 確認用のサンプル: 攻撃テスト「セキュリティ確認サンプル」を収録しています。セレクトから選ぶと、記録・通信・親ページへのアクセスなどを実際に試して、遮断できたかどうかを一覧で表示します（暴走テストのボタンもあります）
-- URL指定の大きな外部タイトル（Cube Core Dungeon、DUNGEON//LOAD）は、それぞれのサイトを枠の中にそのまま表示しているもので、この隔離の対象外です
 - 作り手向けの決まり（フォームと入力要素の禁止、CSP の行の必須など）は [CARTRIDGE.md](CARTRIDGE.md) にあります
 
 ## 仕様メモ
 
 - プレイヤーは iframe（sandbox 属性付き）でカートリッジを実行します
 - `#p=` の解凍はブラウザ標準の DecompressionStream（gzip）を使います
-- バージョン: v0.25（カートリッジ9本＋WASMサンプル6本＋セキュリティ確認サンプル収録、URL作成ツール、画面コントローラー、標準フォント付き。共有は短いURLと埋め込みURL（#p=）の両方をコピー可能。暴走停止時は枠の要素自体を作り直す方式で、停止したタブのままリロードで復旧できる。停止直後の最初の読み込みが始まらなかった場合は、1回だけ自動で読み込み直す。読み込み中は枠の上にクルクル回る表示を出す）
+- バージョン: v0.26（収録8本（セキュリティ確認サンプルを含む）、URL作成ツール、画面コントローラー、標準フォント付き。URL指定（外部URLの読み込みとURL入力欄）を廃止し、読むのは内蔵カートリッジと埋め込みURL（#p=）だけにした。全タイトルが隔離実行と暴走検知の対象。共有は #g= の短いURLと埋め込みURLの両方をコピー可能。暴走停止時は枠の要素自体を作り直す方式で、停止したタブのままリロードで復旧できる。読み込み中は枠の上にクルクル回る表示を出す）
 - 内蔵カートリッジと埋め込みURLのゲームは、隔離した iframe（sandbox）＋CSPで実行します。外部への通信、フォーム送信、ダイアログ表示はできません。記録（localStorage）は他のサイトと共有されず、保存も残りません
 - hp.js を使うゲームには暴走検知が効きます（生存信号が途絶えたら自動で停止。プレイヤーのボタンでオフにできます）
 

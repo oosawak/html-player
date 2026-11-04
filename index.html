@@ -41,7 +41,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.25</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.26</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -50,25 +50,15 @@
       <option value="games/ikkiuchi/">一騎討ち ― 刹那の一閃</option>
       <option value="games/hitori-mahjong/">一人麻雀</option>
       <option value="games/shanghai/">上海 ― 牌消し</option>
-      <option value="https://oosawak.github.io/CubeCoreDungeon/">Cube Core Dungeon（大型・URL指定）</option>
-      <option value="https://oosawak.github.io/rustgames/play/dungeonload/index.html">DUNGEON//LOAD（大型・URL指定）</option>
-      <option value="https://oosawak.github.io/rustgames/play/maze.html">Neon Maze（WASM）</option>
-      <option value="https://oosawak.github.io/rustgames/play/maze3d/index.html">Neon Maze 3D（WASM）</option>
-      <option value="https://oosawak.github.io/rustgames/play/animal-puzzle/index.html">Animal Doku（WASM）</option>
-      <option value="https://oosawak.github.io/rustgames/play/earthdef/index.html">Earth Defense ― 地球防衛（WASM）</option>
-      <option value="https://oosawak.github.io/Lineboy/lineboy.html">LINE BOY（WASM）</option>
-      <option value="https://oosawak.github.io/Cubeboy/Cubeboy.html">CubeBoy（WASM）</option>
       <option value="games/monster-awase/">モンスターあわせ</option>
       <option value="games/monster-hunt/">モンスターハント</option>
       <option value="games/star-breaker/">スターブレイカー（共通Lib）</option>
       <option value="games/ring-burst/">リングバースト（共通Lib）</option>
       <option value="games/security-check/">セキュリティ確認サンプル</option>
-      <option value="__custom">URLを指定する…</option>
     </select>
-    <input type="url" id="custom" placeholder="ゲームのURLを貼り付け" style="display:none">
   </div>
-  <p class="note">名前の後ろの（共通Lib）は、共通ライブラリー（hp.js）を使っているゲームの印、（WASM）は rustgames のWASMゲームの印です。</p>
-  <p class="note">内蔵カートリッジと、埋め込みURL（#p=）のゲームは、隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。URL指定の大きなタイトルは、それぞれのサイトをそのまま表示しています。</p>
+  <p class="note">名前の後ろの（共通Lib）は、共通ライブラリー（hp.js）を使っているゲームの印です。</p>
+  <p class="note">収録カートリッジと、埋め込みURL（#p=）のゲームは、すべて隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。外部のURLを指定して読み込むことはできません。</p>
   <div id="stage"><iframe id="frame" title="cartridge stage"
     sandbox="allow-scripts allow-pointer-lock"></iframe><div id="loading"><div class="spin"></div><div>読み込み中…</div></div></div>
   <div class="info" id="wdmsg"></div>
@@ -92,7 +82,7 @@
       <button class="pbtn ab" data-code="Space">A</button>
     </div>
   </div>
-  <p class="note">共有の形は2つあります。通常は <b>?game=ゲームのURL</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
+  <p class="note">共有の形は2つあります。通常は <b>#g=カートリッジの場所</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
 
   <h2>共通部品はプレイヤー側が持ちます</h2>
   <p class="note">フォントやアイコン、共通のJavaScriptは、カートリッジには入れず、<b>プレイヤー側が持ってゲームに渡します</b>。そのためカートリッジは小さく作れます。代わりに、それらを使うゲームは単体ファイルだけでは完結しません（プレイヤー上で動かす前提です）。プレイヤーが持っている共通部品は次の通りです。</p>
@@ -134,14 +124,12 @@
 const PLAYER = "https://oosawak.github.io/html-player/";
 let frame = document.getElementById("frame");
 const cart = document.getElementById("cart");
-const custom = document.getElementById("custom");
 let currentGame = "";
-let strictNow = true, wdArmed = false, wdLast = 0, justStopped = false;
+let wdArmed = false, wdLast = 0, justStopped = false;
 let watchOn = true;
 try { watchOn = localStorage.getItem("hpwatch") !== "0"; } catch(e){}
 
 const STRICT = "allow-scripts allow-pointer-lock";
-const LOOSE = "allow-scripts allow-same-origin allow-pointer-lock allow-modals";
 function showLoading(on){ document.getElementById("loading").classList.toggle("on", !!on); }
 function freshFrame(){
   const nf = document.createElement("iframe");
@@ -151,9 +139,9 @@ function freshFrame(){
   frame = nf;
 }
 function load(url){
-  currentGame = url; strictNow = url.startsWith("games/"); wdArmed = false; document.getElementById("wdmsg").textContent = "";
+  currentGame = url; wdArmed = false; document.getElementById("wdmsg").textContent = "";
   const retryArmed = justStopped; justStopped = false;
-  freshFrame(); frame.setAttribute("sandbox", strictNow ? STRICT : LOOSE);
+  freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
   frame.src = url;
@@ -164,7 +152,7 @@ function load(url){
   }
 }
 function loadPayload(b64){
-  strictNow = true; wdArmed = false; document.getElementById("wdmsg").textContent = "";
+  wdArmed = false; document.getElementById("wdmsg").textContent = "";
   freshFrame();
   frame.setAttribute("sandbox", STRICT);
   const f = frame;
@@ -178,27 +166,22 @@ function loadPayload(b64){
     .catch(()=>{ document.getElementById("mkinfo").textContent = "ペイロードの解凍に失敗しました。"; });
 }
 function selectCartridge(url){
-  for(const o of cart.options){ if(o.value === url){ cart.value = url; custom.style.display = "none"; return; } }
-  cart.value = "__custom"; custom.style.display = ""; custom.value = url;
+  for(const o of cart.options){ if(o.value === url){ cart.value = url; return; } }
 }
 function init(){
-  const q = new URLSearchParams(location.search);
-  const g = q.get("game");
   const m = location.hash.match(/#p=([A-Za-z0-9\-_]+)/);
-  if(m){ loadPayload(m[1]); cart.value = "__custom"; custom.style.display = ""; return; }
-  const url = g || cart.options[0].value;
+  if(m){ loadPayload(m[1]); return; }
+  let url = cart.options[0].value;
+  const gm = location.hash.match(/#g=([A-Za-z0-9\-_\/\.]+)/);
+  if(gm){ for(const o of cart.options){ if(o.value === gm[1]) url = gm[1]; } }
   selectCartridge(url); load(url);
 }
-cart.addEventListener("change", () => {
-  if(cart.value === "__custom"){ custom.style.display=""; custom.focus(); }
-  else { custom.style.display="none"; load(cart.value); }
-});
-custom.addEventListener("change", () => { if(custom.value.trim()) load(custom.value.trim()); });
+cart.addEventListener("change", () => { load(cart.value); });
 document.getElementById("reload").onclick = () => { if(currentGame) load(currentGame); else location.reload(); };
 document.getElementById("full").onclick = () => { const st = document.getElementById("stage"); if(st.requestFullscreen) st.requestFullscreen(); };
 document.getElementById("share").onclick = async () => {
   const hash = location.hash;
-  const url = hash.startsWith("#p=") ? PLAYER + hash : PLAYER + "?game=" + encodeURIComponent(currentGame || "");
+  const url = hash.startsWith("#p=") ? PLAYER + hash : PLAYER + "#g=" + (currentGame || "");
   try { await navigator.clipboard.writeText(url); alert("共有URLをコピーしました"); }
   catch(e){ prompt("共有URL", url); }
 };
@@ -207,7 +190,7 @@ const PAYLOADS = {"games/ikkiuchi/": "https://oosawak.github.io/html-player/#p=H
 document.getElementById("sharep").onclick = async () => {
   const hash = location.hash;
   const url = hash.startsWith("#p=") ? PLAYER + hash : (PAYLOADS[currentGame] || "");
-  if(!url){ alert("このゲームには埋め込みURLがありません。URL指定のゲームは「共有URLをコピー」を使ってください。"); return; }
+  if(!url){ alert("このゲームには埋め込みURLがありません。"); return; }
   try { await navigator.clipboard.writeText(url); alert("埋め込みURLをコピーしました（" + url.length + "文字）"); }
   catch(e){ prompt("埋め込みURL", url); }
 };
@@ -310,7 +293,7 @@ let wdTick = Date.now();
 setInterval(() => {
   const now = Date.now(); const gap = now - wdTick; wdTick = now;
   if(gap > 10000){ wdLast = now; return; }
-  if(!watchOn || !strictNow || !wdArmed) return;
+  if(!watchOn || !wdArmed) return;
   if(now - wdLast > 4000){
     wdArmed = false; justStopped = true;
     freshFrame(); showLoading(false);

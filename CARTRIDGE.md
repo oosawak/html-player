@@ -18,6 +18,7 @@
 4. **`<meta name="viewport" content="width=device-width, initial-scale=1">` を入れること。** スマホで崩れないこと。画面は縦持ち・横持ちどちらでも遊べるのが理想。
 5. **CSPの行を `<head>` に入れること（必須）。** 単体で開いたときにも、通信とフォーム送信を止めるための行です。
    `<meta http-equiv="Content-Security-Policy" content="default-src https://oosawak.github.io 'unsafe-inline'; connect-src 'none'; form-action 'none'">`
+7. **形式はHTMLのみです。** プレイヤーは外部のURLを指定して読み込むことはしません。配る形は、プレイヤーへの収録か、埋め込みURL（#p=）です。WASMカートリッジは受け付けません（WASMは、プレイヤー提供側の部品としてのみ使います）。
 6. **フォームと入力要素は使わないこと。** `<form>`、`<input>`、`<textarea>`、`<select>` は禁止です。ゲームの操作は Canvas とボタン（div 等）で作ってください。プレイヤーの中では、警告ダイアログ（alert 等）も出ません。
 
 ## 画面
