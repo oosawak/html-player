@@ -1,0 +1,39 @@
+name: games.json 自動生成
+
+# ゲームの登録（games/*/game.md など）が push されたら、
+# プレイヤーが読む games.json を作り直してコミットする。
+# games.json 自体のコミットでは起動しない（paths に含めていない）。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "games/**"
+      - "tools/build-games-json.py"
+      - ".github/workflows/games-json.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: games.json を生成
+        run: python3 tools/build-games-json.py
+      - name: 変わっていたらコミット
+        run: |
+          if git diff --quiet -- games.json && [ -z "$(git status --porcelain -- games.json)" ]; then
+            echo "games.json に変更はありません"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add games.json
+            git commit -m "games.json を自動生成"
+            git push
+          fi
