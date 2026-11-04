@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' https://oosawak.github.io; style-src 'unsafe-inline' https://oosawak.github.io; img-src data: blob: https://oosawak.github.io; font-src data: https://oosawak.github.io; media-src data: blob: https://oosawak.github.io; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-src 'self' https:">
 <title>HTMLプレイヤー ― URLで配れるカートリッジ</title>
 <style>
@@ -36,7 +37,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.23</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.24</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -131,7 +132,7 @@ let frame = document.getElementById("frame");
 const cart = document.getElementById("cart");
 const custom = document.getElementById("custom");
 let currentGame = "";
-let strictNow = true, wdArmed = false, wdLast = 0;
+let strictNow = true, wdArmed = false, wdLast = 0, justStopped = false;
 let watchOn = true;
 try { watchOn = localStorage.getItem("hpwatch") !== "0"; } catch(e){}
 
@@ -144,7 +145,16 @@ function freshFrame(){
   document.getElementById("stage").replaceChild(nf, frame);
   frame = nf;
 }
-function load(url){ currentGame = url; strictNow = url.startsWith("games/"); wdArmed = false; document.getElementById("wdmsg").textContent = ""; freshFrame(); frame.setAttribute("sandbox", strictNow ? STRICT : LOOSE); frame.src = url; }
+function load(url){
+  currentGame = url; strictNow = url.startsWith("games/"); wdArmed = false; document.getElementById("wdmsg").textContent = "";
+  const retryArmed = justStopped; justStopped = false;
+  freshFrame(); frame.setAttribute("sandbox", strictNow ? STRICT : LOOSE); frame.src = url;
+  if(retryArmed){
+    const f = frame; let loaded = false;
+    f.addEventListener("load", () => { loaded = true; }, { once: true });
+    setTimeout(() => { if(!loaded && currentGame === url){ load(url); } }, 2500);
+  }
+}
 function loadPayload(b64){
   strictNow = true; wdArmed = false; document.getElementById("wdmsg").textContent = "";
   freshFrame();
@@ -292,7 +302,7 @@ setInterval(() => {
   if(gap > 10000){ wdLast = now; return; }
   if(!watchOn || !strictNow || !wdArmed) return;
   if(now - wdLast > 4000){
-    wdArmed = false;
+    wdArmed = false; justStopped = true;
     freshFrame();
     document.getElementById("wdmsg").textContent = "カートリッジの応答が止まったため、停止しました（暴走検知）。リロードで再開できます。";
   }
