@@ -21,6 +21,10 @@
   button.sub { background:#3a2a1a; }
   #stage { position:relative; background:#000; border:2px solid #8a6b3f; border-radius:8px; overflow:hidden; }
   iframe { display:block; width:100%; height:70vh; border:0; background:#111; }
+  #loading { position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(0,0,0,.55); color:#fff; font-size:14px; z-index:5; }
+  #loading.on { display:flex; }
+  .spin { width:34px; height:34px; border-radius:50%; border:4px solid rgba(255,255,255,.25); border-top-color:#fff; animation:hpspin .9s linear infinite; }
+  @keyframes hpspin { to { transform:rotate(360deg); } }
   .note { font-size:12px; color:#b7a67f; line-height:1.7; }
   .info { font-size:13px; color:#e8d9ae; min-height: 20px; margin: 6px 0; white-space: pre-wrap; }
   a { color:#e8c87a; }
@@ -37,7 +41,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.24</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.25</span>
   </header>
   <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
 
@@ -66,7 +70,7 @@
   <p class="note">名前の後ろの（共通Lib）は、共通ライブラリー（hp.js）を使っているゲームの印、（WASM）は rustgames のWASMゲームの印です。</p>
   <p class="note">内蔵カートリッジと、埋め込みURL（#p=）のゲームは、隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。URL指定の大きなタイトルは、それぞれのサイトをそのまま表示しています。</p>
   <div id="stage"><iframe id="frame" title="cartridge stage"
-    sandbox="allow-scripts allow-pointer-lock"></iframe></div>
+    sandbox="allow-scripts allow-pointer-lock"></iframe><div id="loading"><div class="spin"></div><div>読み込み中…</div></div></div>
   <div class="info" id="wdmsg"></div>
   <div class="row">
     <button id="reload">リロード</button>
@@ -138,6 +142,7 @@ try { watchOn = localStorage.getItem("hpwatch") !== "0"; } catch(e){}
 
 const STRICT = "allow-scripts allow-pointer-lock";
 const LOOSE = "allow-scripts allow-same-origin allow-pointer-lock allow-modals";
+function showLoading(on){ document.getElementById("loading").classList.toggle("on", !!on); }
 function freshFrame(){
   const nf = document.createElement("iframe");
   nf.id = "frame"; nf.title = "cartridge stage";
@@ -148,7 +153,10 @@ function freshFrame(){
 function load(url){
   currentGame = url; strictNow = url.startsWith("games/"); wdArmed = false; document.getElementById("wdmsg").textContent = "";
   const retryArmed = justStopped; justStopped = false;
-  freshFrame(); frame.setAttribute("sandbox", strictNow ? STRICT : LOOSE); frame.src = url;
+  freshFrame(); frame.setAttribute("sandbox", strictNow ? STRICT : LOOSE);
+  showLoading(true);
+  frame.addEventListener("load", () => showLoading(false), { once: true });
+  frame.src = url;
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -160,6 +168,8 @@ function loadPayload(b64){
   freshFrame();
   frame.setAttribute("sandbox", STRICT);
   const f = frame;
+  showLoading(true);
+  f.addEventListener("load", () => showLoading(false), { once: true });
   const bin = atob(b64.replace(/-/g,"+").replace(/_/g,"/"));
   const bytes = new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
@@ -303,7 +313,7 @@ setInterval(() => {
   if(!watchOn || !strictNow || !wdArmed) return;
   if(now - wdLast > 4000){
     wdArmed = false; justStopped = true;
-    freshFrame();
+    freshFrame(); showLoading(false);
     document.getElementById("wdmsg").textContent = "カートリッジの応答が止まったため、停止しました（暴走検知）。リロードで再開できます。";
   }
 }, 1000);
