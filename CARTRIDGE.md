@@ -85,7 +85,7 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 
 ## 入力（コントローラー仕様）
 
-プレイヤーには画面コントローラーが付いています（十字キー＋A/Bボタン）。コントローラーは、以下のキーボードイベントとしてカートリッジに届きます。ゲームは通常の `keydown` / `keyup`（`e.code`）で受けてください。
+プレイヤーには画面コントローラーが付いています（十字キー＋A/Bボタン、ゲームのすぐ下に表示）。カートリッジは隔離された枠で動くため、コントローラーの入力はキーイベントではなく postMessage（`{t:"hp-key", code, down}`）で届きます。**hp.js を使っているゲームは、そのまま物理キーボードと同じ感覚で受け取れます**（hp.js がメッセージをキーの状態に直します）。物理キーボードの入力は、枠にフォーカスがあるときに通常の `keydown` / `keyup`（`e.code`）で届きます。
 
 | コントローラー | キー（e.code） | 用途の目安 |
 |---|---|---|
@@ -93,8 +93,8 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 | Aボタン | Space | 決定・攻撃・ジャンプなど主アクション |
 | Bボタン | KeyX | キャンセル・副アクション |
 
-- タップ／クリック（pointerdown）でも遊べるようにすると、コントローラーを出さなくても遊べて親切です。
-- 他ドメインに置いたカートリッジにはキーイベントが直接届かない場合があります。その場合は postMessage でも同じ入力が送られます: `window.addEventListener("message", e => { if(e.data && e.data.t === "hp-key") { /* e.data.code, e.data.down */ } })`。対応は任意です。
+- タップ／クリック（pointerdown）でも遊べるようにすると、コントローラーがなくても遊べて親切です。
+- hp.js を使わないゲームがコントローラーの入力を受けたい場合は、postMessage を自分で受けてください: `window.addEventListener("message", e => { if(e.data && e.data.t === "hp-key") { /* e.data.code, e.data.down */ } })`。
 
 ## サイズの目安
 
@@ -111,7 +111,7 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 ### hp.js（2D向けの小さな共通部品）
 
 ```html
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=4"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=5"></script>
 ```
 
 - `HP.loop(function(dt){ ... })` — ゲームループ。dt は前フレームからの秒数

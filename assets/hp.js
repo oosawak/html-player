@@ -10,6 +10,14 @@ addEventListener("keydown",function(e){
   if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Space"].indexOf(e.code)>=0)e.preventDefault();
 });
 addEventListener("keyup",function(e){keys[e.code]=false});
+// 画面コントローラー（プレイヤー側）からの入力。隔離された枠ではキーイベントが
+// 直接届かないため、プレイヤーは postMessage で送り、ここでキーの状態に直す。
+addEventListener("message",function(e){
+  var d=e.data;
+  if(!d||d.t!=="hp-key"||typeof d.code!=="string")return;
+  if(d.down){if(!keys[d.code])pressed[d.code]=true;keys[d.code]=true}
+  else keys[d.code]=false;
+});
 setInterval(function(){try{parent.postMessage({t:"hp-alive"},"*")}catch(e){}},500);
 var HP={
   keys:keys,
