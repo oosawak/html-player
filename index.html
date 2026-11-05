@@ -75,6 +75,8 @@
   body.appmode #listwrap.on { display:block; }
   body.appmode #listgrid { grid-template-columns:repeat(4, 1fr); gap:12px; overflow-y:auto; max-height:100%; padding:2px; }
   body.appmode .gcard:focus-visible { outline:3px solid #4fe3ff; outline-offset:2px; box-shadow:0 0 18px rgba(79,227,255,.5); }
+  body.appmode button:focus { outline:3px solid #4fe3ff; outline-offset:2px; }
+  body.appmode .gcard:focus { box-shadow:0 0 18px rgba(79,227,255,.5); }
   body.appmode .gcard .gs { display:none; }
   #startwrap { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:linear-gradient(180deg,#c6d1b2,#aebc97); z-index:6; cursor:pointer; }
   #startwrap.on { display:flex; }
@@ -101,7 +103,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.50</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.51</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -219,7 +221,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=50" : url; // プレイヤー更新時にカセットも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=51" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -572,7 +574,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=50")).json();
+    const data = await (await fetch("games.json?v=51")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
@@ -644,7 +646,7 @@ if (window.__APPMODE__) {
     try {
       btn.disabled = true;
       const man = await (await fetch("sw-manifest.json")).json();
-      const cache = await caches.open("hp-v50");
+      const cache = await caches.open("hp-v51");
       const files = ["./", "index.html"].concat(man.files);
       let done = 0;
       for (const f of files) {
@@ -666,10 +668,7 @@ if (window.__APPMODE__) {
   });
   function appCandidates(){
     if (menuIsOpen()) return Array.prototype.slice.call(genreBar().querySelectorAll("button"));
-    const out = [];
-    if (menubtn) out.push(menubtn);
-    document.querySelectorAll(".gcard").forEach(c => out.push(c));
-    return out;
+    return Array.prototype.slice.call(document.querySelectorAll(".gcard"));
   }
   function appMove(dir){
     const list = appCandidates();
