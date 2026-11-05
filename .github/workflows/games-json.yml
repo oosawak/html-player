@@ -10,6 +10,7 @@ on:
     paths:
       - "games/**"
       - "tools/build-games-json.py"
+      - "tools/unzip-games.py"
       - ".github/workflows/games-json.yml"
   workflow_dispatch:
 
@@ -24,16 +25,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: zip カセットを展開
+        run: python3 tools/unzip-games.py
       - name: games.json を生成
         run: python3 tools/build-games-json.py
       - name: 変わっていたらコミット
         run: |
-          if git diff --quiet -- games.json && [ -z "$(git status --porcelain -- games.json)" ]; then
-            echo "games.json に変更はありません"
+          if [ -z "$(git status --porcelain -- games.json sw-manifest.json games)" ]; then
+            echo "変更はありません"
           else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add games.json
+            git add games.json sw-manifest.json games
             git commit -m "games.json を自動生成"
             git push
           fi

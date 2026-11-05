@@ -79,7 +79,7 @@ def main():
     for base in ("games", "assets"):
         for dirpath, _dirnames, filenames in os.walk(os.path.join(ROOT, base)):
             for fn in filenames:
-                if fn in ("game.md", "payload-url.txt"):
+                if fn in ("game.md", "payload-url.txt") or fn.lower().endswith(".zip"):
                     continue
                 rel = os.path.relpath(os.path.join(dirpath, fn), ROOT)
                 files.append(rel.replace(os.sep, "/"))
