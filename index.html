@@ -60,11 +60,25 @@
   .pbtn.ab { background:#788089; color:#fff; font-size:16px; }
   .pbtn.ab[data-code="Space"] { background:var(--lcd2); }
   body.appmode { background:#20262b; }
+  body.appmode #viewtabs { display:none; }
+  body.appmode .gcard { position:relative; }
+  body.appmode .gcard .gt { position:absolute; left:0; right:0; bottom:0; background:rgba(143,227,136,.92); padding:2px 4px; font-size:12px; }
   body.appmode #wrap { max-width:none; padding:0; }
   body.appmode #stage { border:none; border-radius:0; box-shadow:none; }
   body.appmode iframe { height:100dvh; }
   body.appmode #listwrap { padding:14px; }
   body.appmode .gcard .gs { display:none; }
+  #startwrap { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:linear-gradient(180deg,#c6d1b2,#aebc97); z-index:6; cursor:pointer; }
+  #startwrap.on { display:flex; }
+  #startwrap img { width:min(44%, 240px); border:3px solid var(--ink); border-radius:24px; }
+  .stitle { font-size:22px; letter-spacing:.1em; color:var(--ink); }
+  .spush { font-size:16px; letter-spacing:.3em; color:var(--ink); animation:hpblink 1.2s steps(2) infinite; }
+  @keyframes hpblink { 50% { opacity:0; } }
+  body.appmode #listwrap.on { display:flex; gap:10px; }
+  body.appmode #listgrid { flex:1; grid-template-columns:repeat(4, 1fr); align-content:start; }
+  #genrebar { display:none; }
+  body.appmode #genrebar { display:flex; flex-direction:column; gap:8px; width:150px; flex:none; }
+  #genrebar button.on { background:var(--lcd); color:var(--ink); }
   #appback { position:fixed; top:10px; right:10px; z-index:60; opacity:.88; display:none; }
   body.appmode #appback.on { display:block; }
 </style>
@@ -72,7 +86,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.48</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.49</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -90,6 +104,7 @@
       <div class="row" style="margin:0">
         <button id="srccopy" class="sub">ソースをコピー</button>
       </div>
+    <div id="startwrap"><img src="assets/app-icon.png" alt=""><div class="stitle">HTMLカセットプレイヤー</div><div class="spush">PUSH START</div></div>
       <div class="info" id="srcinfo"></div>
       <textarea id="srcview" readonly placeholder="ここにカセットのソース（HTML）が表示されます"></textarea>
     </div>
@@ -189,7 +204,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=48" : url; // プレイヤー更新時にカセットも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=49" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -232,6 +247,8 @@ document.getElementById("share").onclick = async () => {
 };
 
 let PAYLOADS = {};
+const GENRES = {};
+let genreFilter = "";
 var HPDESC = { keys:"押されているキーの状態", left:"左キー", right:"右キー", up:"上キー", down:"下キー",
   a:"Aボタン（Space）", b:"Bボタン（Xキー）", aHit:"Aを押した瞬間", bHit:"Bを押した瞬間",
   x:"Xボタン（ゲームパッド／Zキー）", y:"Yボタン（ゲームパッド／Cキー）", l1:"L1ボタン（ゲームパッド／左Shift）", r1:"R1ボタン（ゲームパッド／右Shift）",
@@ -262,7 +279,7 @@ function hpMethods(src){
   }
   return names;
 }
-fetch("assets/hp.js?v=9").then(function(r){ return r.text(); }).then(function(src){
+fetch("assets/hp.js?v=10").then(function(r){ return r.text(); }).then(function(src){
   var el = document.getElementById("hpapi");
   if(!el) return;
   var names = hpMethods(src);
@@ -480,9 +497,11 @@ const tabgame = document.getElementById("tabgame");
 const tabsrc = document.getElementById("tabsrc");
 const tablist = document.getElementById("tablist");
 const listwrap = document.getElementById("listwrap");
+const startwrap = document.getElementById("startwrap");
 function setView(mode){
   srcwrap.classList.toggle("on", mode === "src");
   listwrap.classList.toggle("on", mode === "list");
+  startwrap.classList.toggle("on", mode === "start");
   tabgame.classList.toggle("on", mode === "game");
   tabsrc.classList.toggle("on", mode === "src");
   tablist.classList.toggle("on", mode === "list");
@@ -493,10 +512,11 @@ function markCurrent(){
   document.querySelectorAll(".gcard").forEach(c => c.classList.toggle("cur", c.dataset.game === currentGame));
 }
 function buildList(){
-  if(listBuilt){ markCurrent(); return; }
   listBuilt = true;
   const grid = document.getElementById("listgrid");
+  grid.innerHTML = "";
   for(const o of cart.options){
+    if (genreFilter && GENRES[o.value] !== genreFilter) continue;
     const b = document.createElement("button");
     b.className = "gcard"; b.dataset.game = o.value;
     const img = document.createElement("img");
@@ -536,13 +556,14 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=48")).json();
+    const data = await (await fetch("games.json?v=49")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
       o.textContent = g.title + (g.lib ? "（共通Lib）" : "");
       cart.appendChild(o);
       if(g.payload) PAYLOADS[g.path] = g.payload;
+      if(g.genre) GENRES[g.path] = g.genre;
     }
   } catch(e){}
   if(!cart.options.length){
@@ -552,7 +573,19 @@ async function loadRegistry(){
     return;
   }
   init();
-  if (window.__APPMODE__) { showList(); const c0 = document.querySelector(".gcard"); if (c0) c0.focus(); }
+  if (window.__APPMODE__) {
+    const genres = [];
+    for (const o of cart.options) { const g = GENRES[o.value]; if (g && !genres.includes(g)) genres.push(g); }
+    if (genres.length) {
+      const bar = document.createElement("div");
+      bar.id = "genrebar";
+      const mk = (label, val) => { const b = document.createElement("button"); b.textContent = label; if (!val) b.classList.add("on"); b.onclick = () => { genreFilter = val; bar.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); buildList(); const c = document.querySelector(".gcard"); if (c) c.focus(); }; return b; };
+      bar.appendChild(mk("すべて", ""));
+      genres.forEach(g => bar.appendChild(mk(g, g)));
+      listwrap.insertBefore(bar, document.getElementById("listgrid"));
+    }
+    setView("start");
+  }
 }
 /* ---- app mode ---- */
 if (window.__APPMODE__) {
@@ -565,14 +598,29 @@ if (window.__APPMODE__) {
   appback.textContent = "\u2630 一覧";
   appback.onclick = () => { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); };
   document.body.appendChild(appback);
-  let prevL2 = false, prevR2 = false;
+  let prevL2 = false, prevR2 = false, prevStart = false, prevA2 = false;
+  startwrap.onclick = () => { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); };
+  addEventListener("message", (e) => {
+    const d = e.data;
+    if (!d || d.t !== "hp-sys") return;
+    if (d.btn === "l2" && !listwrap.classList.contains("on") && !startwrap.classList.contains("on")) { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
+    if (d.btn === "r2" && listwrap.classList.contains("on")) { const ae = document.activeElement; const card = (ae && ae.classList && ae.classList.contains("gcard")) ? ae : (document.querySelector(".gcard.cur") || document.querySelector(".gcard")); if (card) { card.click(); frame.focus(); } }
+  });
   setInterval(() => {
     const listOn = listwrap.classList.contains("on");
-    appback.classList.toggle("on", !listOn);
+    const startOn = startwrap.classList.contains("on");
+    appback.classList.toggle("on", !listOn && !startOn);
     let g = null;
     try { const gs = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < gs.length; i++) { if (gs[i] && gs[i].connected) { g = gs[i]; break; } } } catch(e){}
-    if (!g) { prevL2 = prevR2 = false; return; }
+    if (!g) { prevL2 = prevR2 = prevStart = prevA2 = false; return; }
     const l2 = !!(g.buttons[6] && g.buttons[6].pressed), r2 = !!(g.buttons[7] && g.buttons[7].pressed);
+    const startBtn = !!(g.buttons[9] && g.buttons[9].pressed), aBtn = !!(g.buttons[0] && g.buttons[0].pressed);
+    if (startOn) {
+      if ((startBtn && !prevStart) || (aBtn && !prevA2) || (r2 && !prevR2)) { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
+      prevStart = startBtn; prevA2 = aBtn; prevL2 = l2; prevR2 = r2; return;
+    }
+    if (l2 && !prevL2 && listOn) { setView("start"); prevL2 = l2; prevR2 = r2; prevStart = startBtn; prevA2 = aBtn; return; }
+    prevStart = startBtn; prevA2 = aBtn;
     if (r2 && !prevR2 && listOn) {
       const ae = document.activeElement;
       const card = (ae && ae.classList && ae.classList.contains("gcard")) ? ae : (document.querySelector(".gcard.cur") || document.querySelector(".gcard"));

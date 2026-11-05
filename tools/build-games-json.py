@@ -59,6 +59,7 @@ def main():
             "slug": slug,
             "title": title,
             "lib": lib,
+            "genre": fm.get("genre", ""),
             "order": order,
             "path": f"games/{slug}/",
             "thumb": f"assets/thumbs/{slug}.jpg",

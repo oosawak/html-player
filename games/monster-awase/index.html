@@ -77,4 +77,75 @@ function start(){
 }
 document.getElementById("restart").onclick=start;
 start();
-</script></body></html>
+</script>
+<script>
+/* 入力ブリッジ: 物理ゲームパッドと画面コントローラーの入力を、キー操作に変換する */
+(function(){
+  "use strict";
+  function fire(type, code){
+    document.dispatchEvent(new KeyboardEvent(type, {code: code, key: code === "Space" ? " " : code, bubbles: true, cancelable: true}));
+  }
+  var held = {};
+  function set(code, down){
+    if (held[code] === down) return;
+    held[code] = down;
+    fire(down ? "keydown" : "keyup", code);
+  }
+  addEventListener("message", function(e){
+    var d = e.data;
+    if (!d || d.t !== "hp-key" || typeof d.code !== "string") return;
+    set(d.code, !!d.down);
+  });
+  var MAP = [[12,"ArrowUp"],[13,"ArrowDown"],[14,"ArrowLeft"],[15,"ArrowRight"],[0,"Space"],[1,"KeyX"],[2,"KeyZ"],[3,"KeyC"],[4,"ShiftLeft"],[5,"ShiftRight"]];
+  var sysPrev = {6:false, 7:false};
+  setInterval(function(){
+    var gps;
+    try { gps = navigator.getGamepads ? navigator.getGamepads() : []; } catch(e){ return; }
+    var gp = null;
+    for (var i = 0; i < gps.length; i++) { if (gps[i]) { gp = gps[i]; break; } }
+    if (!gp) return;
+    var b = gp.buttons || [], ax = gp.axes || [];
+    function btn(n){ return !!(b[n] && b[n].pressed); }
+    for (var j = 0; j < MAP.length; j++) {
+      var code = MAP[j][1], down = btn(MAP[j][0]);
+      if (code === "ArrowLeft") down = down || ax[0] < -0.5;
+      if (code === "ArrowRight") down = down || ax[0] > 0.5;
+      if (code === "ArrowUp") down = down || ax[1] < -0.5;
+      if (code === "ArrowDown") down = down || ax[1] > 0.5;
+      set(code, down);
+    }
+    [6, 7].forEach(function(n){
+      var down = btn(n);
+      if (down && !sysPrev[n]) { try { parent.postMessage({t: "hp-sys", btn: n === 6 ? "l2" : "r2"}, "*"); } catch(e){} }
+      sysPrev[n] = down;
+    });
+  }, 16);
+})();
+</script>
+
+<script>
+/* 画面に収まるよう自動で縮小する（スクロールなしで全体が見えるように） */
+(function(){
+  function fit(){
+    var de = document.documentElement;
+    de.style.zoom = "";
+    var z = Math.min(1, (innerHeight - 4) / de.scrollHeight, (innerWidth - 4) / de.scrollWidth);
+    if (z < 1) {
+      de.style.zoom = z;
+      for (var i = 0; i < 3 && de.scrollHeight > de.clientHeight; i++) {
+        z = z * (de.clientHeight / de.scrollHeight) * 0.99;
+        de.style.zoom = z;
+      }
+    }
+  }
+  addEventListener("resize", fit);
+  addEventListener("load", function(){
+    fit();
+    var n = 0;
+    var iv = setInterval(function(){ fit(); if (++n >= 12) clearInterval(iv); }, 400);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+  });
+  fit();
+})();
+</script>
+</body></html>

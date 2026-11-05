@@ -25,7 +25,7 @@ setInterval(function(){try{parent.postMessage({t:"hp-alive"},"*")}catch(e){}},50
 // X=ボタン2、Y=ボタン3、L1=ボタン4、R1=ボタン5。
 // L2（ボタン6）とR2（ボタン7）はプレイヤー用（出入り）に予約され、ここでは読まない。
 // キーボードと同じ状態に重ねるので、ゲーム側は入力元を区別しなくてよい。
-var padKeys={},padPrev={};
+var padKeys={},padPrev={},sysPrev={};
 function padSet(code,down){
   if(down){
     if(!padPrev[code])pressed[code]=true;
@@ -56,6 +56,13 @@ function pollPad(){
     m.PadR1=btn(5);
   }
   for(var code in m)padSet(code,m[code]);
+  if(gp){
+    [[6,"l2"],[7,"r2"]].forEach(function(pair){
+      var down=!!(gp.buttons&&gp.buttons[pair[0]]&&gp.buttons[pair[0]].pressed);
+      if(down&&!sysPrev[pair[1]]){try{parent.postMessage({t:"hp-sys",btn:pair[1]},"*")}catch(e){}}
+      sysPrev[pair[1]]=down;
+    });
+  }
 }
 setInterval(pollPad,16);
 var HP={
