@@ -59,12 +59,20 @@
   .pbtn:active { background:var(--lcd); transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
   .pbtn.ab { background:#788089; color:#fff; font-size:16px; }
   .pbtn.ab[data-code="Space"] { background:var(--lcd2); }
+  body.appmode { background:#20262b; }
+  body.appmode #wrap { max-width:none; padding:0; }
+  body.appmode #stage { border:none; border-radius:0; box-shadow:none; }
+  body.appmode iframe { height:100dvh; }
+  body.appmode #listwrap { padding:14px; }
+  body.appmode .gcard .gs { display:none; }
+  #appback { position:fixed; top:10px; right:10px; z-index:60; opacity:.88; display:none; }
+  body.appmode #appback.on { display:block; }
 </style>
 </head>
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.47</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.48</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -156,6 +164,8 @@
 <script>
 "use strict";
 const PLAYER = "https://oosawak.github.io/html-player/";
+window.__APPMODE__ = false;
+try { window.__APPMODE__ = !!window.__TAURI_INTERNALS__ || /[?&]app=1(&|$)/.test(location.search); } catch(e){}
 let frame = document.getElementById("frame");
 const cart = document.getElementById("cart");
 let currentGame = "";
@@ -179,7 +189,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=47" : url; // プレイヤー更新時にカセットも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=48" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -224,6 +234,8 @@ document.getElementById("share").onclick = async () => {
 let PAYLOADS = {};
 var HPDESC = { keys:"押されているキーの状態", left:"左キー", right:"右キー", up:"上キー", down:"下キー",
   a:"Aボタン（Space）", b:"Bボタン（Xキー）", aHit:"Aを押した瞬間", bHit:"Bを押した瞬間",
+  x:"Xボタン（ゲームパッド／Zキー）", y:"Yボタン（ゲームパッド／Cキー）", l1:"L1ボタン（ゲームパッド／左Shift）", r1:"R1ボタン（ゲームパッド／右Shift）",
+  xHit:"Xを押した瞬間", yHit:"Yを押した瞬間", l1Hit:"L1を押した瞬間", r1Hit:"R1を押した瞬間",
   loop:"ゲームループ", text:"文字を描く", bar:"ゲージを描く", panel:"パネルを描く",
   title:"タイトル画面を描く", scene:"場面の切り替え（cur／go／frameを返します）", beep:"効果音" };
 function hpMethods(src){
@@ -250,7 +262,7 @@ function hpMethods(src){
   }
   return names;
 }
-fetch("assets/hp.js?v=8").then(function(r){ return r.text(); }).then(function(src){
+fetch("assets/hp.js?v=9").then(function(r){ return r.text(); }).then(function(src){
   var el = document.getElementById("hpapi");
   if(!el) return;
   var names = hpMethods(src);
@@ -420,11 +432,13 @@ setInterval(() => {
     if (ae && (ae.tagName === "IFRAME" || ae.tagName === "TEXTAREA" || (ae.tagName === "INPUT" && ae.type !== "checkbox"))) { lastDir = null; prevA = btn(g, 0); prevB = btn(g, 1); return; }
     var now = Date.now();
     var d = dirOf(g);
+    if (window.__APPMODE__ && !document.getElementById("listwrap").classList.contains("on")) d = null;
     if (d) {
       if (d !== lastDir) { move(d); lastDir = d; dirStart = now; lastStep = now; }
       else if (now - dirStart > 380 && now - lastStep > 150) { move(d); lastStep = now; }
     } else lastDir = null;
     var a = btn(g, 0), b = btn(g, 1);
+    if (window.__APPMODE__) { a = false; b = false; }
     if (a && !prevA) {
       var el = document.activeElement;
       if (el && el !== document.body && el.click) {
@@ -522,7 +536,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=47")).json();
+    const data = await (await fetch("games.json?v=48")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
@@ -538,6 +552,39 @@ async function loadRegistry(){
     return;
   }
   init();
+  if (window.__APPMODE__) { showList(); const c0 = document.querySelector(".gcard"); if (c0) c0.focus(); }
+}
+/* ---- app mode ---- */
+if (window.__APPMODE__) {
+  document.body.classList.add("appmode");
+  Array.prototype.forEach.call(document.getElementById("wrap").children, function(el){
+    if (el.id !== "stage") el.style.display = "none";
+  });
+  const appback = document.createElement("button");
+  appback.id = "appback";
+  appback.textContent = "\u2630 一覧";
+  appback.onclick = () => { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); };
+  document.body.appendChild(appback);
+  let prevL2 = false, prevR2 = false;
+  setInterval(() => {
+    const listOn = listwrap.classList.contains("on");
+    appback.classList.toggle("on", !listOn);
+    let g = null;
+    try { const gs = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < gs.length; i++) { if (gs[i] && gs[i].connected) { g = gs[i]; break; } } } catch(e){}
+    if (!g) { prevL2 = prevR2 = false; return; }
+    const l2 = !!(g.buttons[6] && g.buttons[6].pressed), r2 = !!(g.buttons[7] && g.buttons[7].pressed);
+    if (r2 && !prevR2 && listOn) {
+      const ae = document.activeElement;
+      const card = (ae && ae.classList && ae.classList.contains("gcard")) ? ae : (document.querySelector(".gcard.cur") || document.querySelector(".gcard"));
+      if (card) { card.click(); frame.focus(); }
+    }
+    if (l2 && !prevL2 && !listOn) {
+      showList();
+      const c2 = document.querySelector(".gcard.cur") || document.querySelector(".gcard");
+      if (c2) c2.focus();
+    }
+    prevL2 = l2; prevR2 = r2;
+  }, 50);
 }
 loadRegistry();
 </script>

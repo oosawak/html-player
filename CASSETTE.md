@@ -95,6 +95,17 @@ FontSpace の RPG カテゴリ（https://www.fontspace.com/category/rpg）のよ
 | Aボタン | Space | 決定・攻撃・ジャンプなど主アクション |
 | Bボタン | KeyX | キャンセル・副アクション |
 
+物理ゲームパッド（標準配置）の割り当ても決まっています。
+
+| ボタン | 担当 | hp.js |
+|---|---|---|
+| 十字キー／左スティック | ゲーム | left／right／up／down |
+| A／B／X／Y | ゲーム | a／b／x／y（xHit なども同様） |
+| L1／R1 | ゲーム | l1／r1 |
+| **L2／R2** | **プレイヤー（システム）用** | ゲームには渡らない |
+
+L2 と R2 はプレイヤーが予約します（アプリ版で「ゲームへ入る／一覧へ戻る」に使う）。ゲーム側では L2／R2 を使わないでください。キーボードでは X＝Zキー、Y＝Cキー、L1＝左Shift、R1＝右Shift でも代用できます。
+
 - タップ／クリック（pointerdown）でも遊べるようにすると、コントローラーがなくても遊べて親切です。
 - hp.js を使わないゲームがコントローラーの入力を受けたい場合は、postMessage を自分で受けてください: `window.addEventListener("message", e => { if(e.data && e.data.t === "hp-key") { /* e.data.code, e.data.down */ } })`。
 

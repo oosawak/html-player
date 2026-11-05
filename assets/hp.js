@@ -1,5 +1,5 @@
 // HP mini framework for HTML Player cartridges (MIT)
-// プレイヤーが供給する共通部品: 入力（十字キー/A/B）・ゲームループ・効果音。
+// プレイヤーが供給する共通部品: 入力（十字キー/A/B/X/Y/L1/R1）・ゲームループ・効果音。
 // ゲーム側は <script src="https://oosawak.github.io/html-player/assets/hp.js"></script> で読み込む。
 (function(){
 "use strict";
@@ -21,7 +21,9 @@ addEventListener("message",function(e){
 });
 setInterval(function(){try{parent.postMessage({t:"hp-alive"},"*")}catch(e){}},500);
 // 物理ゲームパッド（Androidゲーム機の十字キーなど）。標準配置:
-// 十字=ボタン12〜15、左スティック=軸0/1、A=ボタン0、B=ボタン1。
+// 十字=ボタン12〜15、左スティック=軸0/1、A=ボタン0、B=ボタン1、
+// X=ボタン2、Y=ボタン3、L1=ボタン4、R1=ボタン5。
+// L2（ボタン6）とR2（ボタン7）はプレイヤー用（出入り）に予約され、ここでは読まない。
 // キーボードと同じ状態に重ねるので、ゲーム側は入力元を区別しなくてよい。
 var padKeys={},padPrev={};
 function padSet(code,down){
@@ -38,7 +40,7 @@ function pollPad(){
   try{gps=navigator.getGamepads?navigator.getGamepads():[]}catch(e){return}
   var gp=null;
   for(var i=0;i<gps.length;i++){if(gps[i]){gp=gps[i];break}}
-  var m={ArrowLeft:false,ArrowRight:false,ArrowUp:false,ArrowDown:false,Space:false,KeyX:false};
+  var m={ArrowLeft:false,ArrowRight:false,ArrowUp:false,ArrowDown:false,Space:false,KeyX:false,PadX:false,PadY:false,PadL1:false,PadR1:false};
   if(gp){
     var b=gp.buttons||[],ax=gp.axes||[];
     function btn(i){return !!(b[i]&&b[i].pressed)}
@@ -48,6 +50,10 @@ function pollPad(){
     m.ArrowDown=btn(13)||ax[1]>0.5;
     m.Space=btn(0);
     m.KeyX=btn(1);
+    m.PadX=btn(2);
+    m.PadY=btn(3);
+    m.PadL1=btn(4);
+    m.PadR1=btn(5);
   }
   for(var code in m)padSet(code,m[code]);
 }
@@ -62,6 +68,14 @@ var HP={
   b:function(){return !!(keys.KeyX||padKeys.KeyX)},
   aHit:function(){return !!pressed.Space},
   bHit:function(){return !!pressed.KeyX},
+  x:function(){return !!(padKeys.PadX||keys.KeyZ)},
+  y:function(){return !!(padKeys.PadY||keys.KeyC)},
+  l1:function(){return !!(padKeys.PadL1||keys.ShiftLeft)},
+  r1:function(){return !!(padKeys.PadR1||keys.ShiftRight)},
+  xHit:function(){return !!(pressed.PadX||pressed.KeyZ)},
+  yHit:function(){return !!(pressed.PadY||pressed.KeyC)},
+  l1Hit:function(){return !!(pressed.PadL1||pressed.ShiftLeft)},
+  r1Hit:function(){return !!(pressed.PadR1||pressed.ShiftRight)},
   loop:function(fn){
     var p=performance.now();
     function f(n){
