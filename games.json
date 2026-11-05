@@ -121,16 +121,6 @@
    "chars": 0
   },
   {
-   "slug": "animal-doku",
-   "title": "Animal Doku（WASM）",
-   "lib": false,
-   "genre": "パズル",
-   "path": "games/animal-doku/",
-   "thumb": "assets/thumbs/animal-doku.jpg",
-   "payload": "",
-   "chars": 0
-  },
-  {
    "slug": "earth-defense",
    "title": "Earth Defense（WASM）",
    "lib": false,
