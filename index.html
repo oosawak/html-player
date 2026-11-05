@@ -110,7 +110,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.53</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.54</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -229,7 +229,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", SANDBOX());
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=53" : url; // プレイヤー更新時にカセットも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=54" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -593,7 +593,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=53")).json();
+    const data = await (await fetch("games.json?v=54")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
@@ -686,7 +686,7 @@ if (window.__APPMODE__) {
         "assets/fonts/GenInterfaceJP-Light.ttf", "assets/fonts/GenInterfaceJP-Regular.ttf", "assets/fonts/GenInterfaceJP-Bold.ttf",
         "assets/thumbs/" + slug + ".jpg"];
       const files = man.files.filter(f => f.startsWith("games/" + slug + "/") || shared.includes(f));
-      const cache = await caches.open("hp-v53");
+      const cache = await caches.open("hp-v54");
       let done = 0;
       for (const f of files) {
         try { const r = await fetch(f); if (r.ok) await cache.put(f, r.clone()); } catch(e){}

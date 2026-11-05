@@ -147,5 +147,42 @@ document.getElementById("b-run").onclick = () => { while(true){} };
   }, 16);
 })();
 </script>
+
+<style>button:focus{outline:3px solid #35c4ff;outline-offset:1px}</style>
+<script>
+"use strict";
+/* カーソル操作: 十字キーでボタン間を移動、A（Space）で決定 */
+(function(){
+  function items(){ return Array.prototype.filter.call(document.querySelectorAll("button"), function(el){
+    var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !el.disabled; }); }
+  function ctr(el){ var r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  var lastEl = null, lastIdx = 0;
+  function paint(i){ var list = items(); if (!list.length) return;
+    i = Math.max(0, Math.min(i, list.length - 1)); lastIdx = i; lastEl = list[i]; list[i].focus(); }
+  function move(dir){
+    var list = items(); if (!list.length) return;
+    var j = list.indexOf(document.activeElement);
+    if (j < 0) { paint(lastIdx); return; }
+    var c = ctr(list[j]), best = -1, bestScore = 1e18;
+    list.forEach(function(el, m){
+      if (m === j) return;
+      var o = ctr(el), dx = o.x - c.x, dy = o.y - c.y, primary, cross;
+      if (dir === "left") { if (dx >= -4) return; primary = -dx; cross = Math.abs(dy); }
+      else if (dir === "right") { if (dx <= 4) return; primary = dx; cross = Math.abs(dy); }
+      else if (dir === "up") { if (dy >= -4) return; primary = -dy; cross = Math.abs(dx); }
+      else { if (dy <= 4) return; primary = dy; cross = Math.abs(dx); }
+      var score = primary + cross * 3;
+      if (score < bestScore) { bestScore = score; best = m; }
+    });
+    if (best >= 0) paint(best);
+  }
+  document.addEventListener("keydown", function(e){
+    if (e.code.indexOf("Arrow") === 0) { e.preventDefault(); move(e.code.slice(5).toLowerCase()); }
+  });
+  new MutationObserver(function(){
+    if (lastEl && !document.contains(lastEl)) paint(lastIdx);
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 </body>
 </html>

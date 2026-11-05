@@ -253,6 +253,12 @@ async function start() {
     wasm.start_game_maze3d();
     document.getElementById('title-screen').style.display = 'none';
   });
+  document.addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' && e.code !== 'Enter') return;
+    const vis = (id) => { const el = document.getElementById(id); return el && getComputedStyle(el).display !== 'none'; };
+    if (vis('title-screen')) { e.preventDefault(); document.getElementById('btn-start').click(); }
+    else if (vis('game-over') || vis('level-clear')) { e.preventDefault(); document.getElementById('btn-reset').click(); }
+  });
   document.getElementById('btn-reset').addEventListener('click', () => {
     wasm.start_game_maze3d();
     clearEl.style.display = 'none';

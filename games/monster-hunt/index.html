@@ -93,6 +93,7 @@ document.getElementById("go").onclick=start;
 document.addEventListener("keydown",e=>{
  if(e.repeat)return;
  const k=e.code;
+ if((k==="Space"||k==="Enter")&&!playing){document.getElementById("go").click();e.preventDefault();return}
  if(k==="ArrowLeft"){cur=(cur+11)%12;drawCur();e.preventDefault()}
  else if(k==="ArrowRight"){cur=(cur+1)%12;drawCur();e.preventDefault()}
  else if(k==="ArrowUp"){cur=(cur+8)%12;drawCur();e.preventDefault()}
