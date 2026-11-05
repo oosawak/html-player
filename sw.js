@@ -1,7 +1,7 @@
 /* HTMLカセットプレイヤー Service Worker（オフライン用）
    ダウンロードボタンが Cache Storage (hp-v50) に全ファイルを保存し、
    ここは同一オリジンの取得を「キャッシュ優先＋無ければ通信」で捌く。 */
-const CACHE = "hp-v52";
+const CACHE = "hp-v53";
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
   e.waitUntil(

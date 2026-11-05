@@ -148,4 +148,70 @@ start();
   fit();
 })();
 </script>
+
+<style>#grid button:focus{outline:3px solid #35c4ff;outline-offset:1px}</style>
+<script>
+"use strict";
+/* カーソル操作: 十字キーで移動、A（Space）で決定。物理パッドは入力ブリッジがキーに変換して届ける */
+(function(){
+  var SEL = "#grid button", MODE = "focus", FREEONLY = false;
+  function items(){ return Array.prototype.filter.call(document.querySelectorAll(SEL), function(el){
+    var r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && !el.disabled && (!FREEONLY || !el.classList.contains("lock")); }); }
+  function ctr(el){ var r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  var curIdx = 0, lastEl = null, lastIdx = 0;
+  function paint(i){
+    var list = items(); if (!list.length) return;
+    i = Math.max(0, Math.min(i, list.length - 1));
+    if (MODE === "class") {
+      curIdx = i;
+      list.forEach(function(el, j){ el.classList.toggle("hcur", j === i); });
+    } else {
+      lastIdx = i; lastEl = list[i]; list[i].focus();
+    }
+  }
+  function current(){
+    var list = items(); if (!list.length) return null;
+    if (MODE === "class") { if (curIdx >= list.length) curIdx = list.length - 1; return list[curIdx]; }
+    var j = list.indexOf(document.activeElement);
+    if (j >= 0) { lastEl = document.activeElement; lastIdx = j; return lastEl; }
+    return null;
+  }
+  function move(dir){
+    var list = items(); if (!list.length) return;
+    var from = current();
+    if (!from) { paint(MODE === "class" ? curIdx : lastIdx); return; }
+    var c = ctr(from), best = -1, bestScore = 1e18;
+    list.forEach(function(el, j){
+      if (el === from) return;
+      var o = ctr(el), dx = o.x - c.x, dy = o.y - c.y, primary, cross;
+      if (dir === "left") { if (dx >= -4) return; primary = -dx; cross = Math.abs(dy); }
+      else if (dir === "right") { if (dx <= 4) return; primary = dx; cross = Math.abs(dy); }
+      else if (dir === "up") { if (dy >= -4) return; primary = -dy; cross = Math.abs(dx); }
+      else { if (dy <= 4) return; primary = dy; cross = Math.abs(dx); }
+      var score = primary + cross * 3;
+      if (score < bestScore) { bestScore = score; best = j; }
+    });
+    if (best >= 0) paint(best);
+  }
+  document.addEventListener("keydown", function(e){
+    var k = e.code;
+    if (k === "ArrowLeft" || k === "ArrowRight" || k === "ArrowUp" || k === "ArrowDown") {
+      e.preventDefault(); move(k.slice(5).toLowerCase());
+    } else if (k === "Space" || k === "Enter") {
+      var el = current();
+      if (el) { e.preventDefault(); el.click(); }
+    }
+  });
+  new MutationObserver(function(){
+    var list = items(); if (!list.length) return;
+    if (MODE === "class") {
+      if (!document.querySelector(SEL + ".hcur")) paint(curIdx);
+    } else if (lastEl && !document.contains(lastEl)) {
+      paint(Math.min(lastIdx, list.length - 1));
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  if (MODE === "class") paint(0);
+})();
+</script>
 </body></html>
