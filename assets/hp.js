@@ -79,7 +79,7 @@ var HP={
     g.fillStyle=color;g.fillRect(x,y,w*Math.max(0,Math.min(1,ratio)),h);
   },
   text:function(g,s,x,y,size,color,align,font){
-    g.font=(size||13)+'px '+(font||'"HP Mono",monospace');
+    g.font=(size||13)+'px '+(font||'"HP Denki",sans-serif');
     g.fillStyle=color||"#fff";g.textAlign=align||"left";
     g.fillText(s,x,y);g.textAlign="left";
   },
@@ -89,8 +89,8 @@ var HP={
   },
   title:function(g,W,H,title,lines,color,font){
     g.fillStyle=color||"#fff";g.textAlign="center";
-    g.font=(font?'26px ':'700 25px ')+(font||'"HP Sans",sans-serif');g.fillText(title,W/2,H/2-40);
-    g.font=(font?'14px ':'13px ')+(font||'"HP Sans",sans-serif');
+    g.font=(font?'26px ':'700 25px ')+(font||'"HP Denki",sans-serif');g.fillText(title,W/2,H/2-40);
+    g.font=(font?'14px ':'13px ')+(font||'"HP Denki",sans-serif');
     (lines||[]).forEach(function(s,i){g.fillText(s,W/2,H/2-8+i*22)});
     g.textAlign="left";
   },

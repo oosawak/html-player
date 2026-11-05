@@ -14,7 +14,7 @@
 </head>
 <body>
 <canvas id="cv" width="512" height="512"></canvas>
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=7"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=8"></script>
 <script>
 "use strict";
 // LINE BOY — ネオンな線画プラットフォーマー（Pyxel版からの作り直し）
@@ -58,7 +58,7 @@ function nCircb(x,y,r,core,glow){
 function pset(x,y,c){g.fillStyle=PAL[c];g.fillRect(x|0,y|0,1,1)}
 function rect(x,y,w,h,c){g.fillStyle=PAL[c];g.fillRect(x,y,w,h)}
 function text(s,x,y,size,col,align,font){
-  g.font=size+"px "+(font||'"HP Sans",sans-serif');
+  g.font=size+"px "+(font||'"HP Denki",sans-serif');
   g.fillStyle=PAL[col];g.textAlign=align||"left";g.fillText(s,x,y);g.textAlign="left";
 }
 function spiral(cx,cy,maxR,col,tOff){
@@ -486,7 +486,7 @@ function drawHUD(){
   const theme=THEMES[world];
   text("スコア:"+player.score,6,18,13,theme.ground);
   const name=theme.name;
-  g.font="13px \"HP Sans\",sans-serif";
+  g.font="13px \"HP Denki\",sans-serif";
   text(name,W-g.measureText(name).width-6,18,13,theme.ground);
   text("WORLD "+(world+1),6,36,11,CGR);
   if(boss&&boss.alive&&bossOn){
@@ -509,7 +509,7 @@ function drawTitle(){
     nRectb(bx,by,bw,bh,c,CGR);rect(bx+1,by+1,bw-2,bh-2,c);bx+=bw+gap;
   }
   const titleStr="LINE BOY";
-  g.font="700 34px \"HP Sans\",sans-serif";
+  g.font="700 34px \"HP Denki\",sans-serif";
   const twd=g.measureText(titleStr).width;
   let cx=(W-twd)/2;const ty=by+bh+48;
   for(let i=0;i<titleStr.length;i++){
@@ -520,7 +520,7 @@ function drawTitle(){
   if(((frame/20)|0)%2===0)text("Aボタン（スペース）でスタート",W/2,H/2+64,14,CY,"center");
   const theme=THEMES[world];
   const st="◀ WORLD "+(world+1)+": "+theme.name+" ▶";
-  g.font="14px \"HP Sans\",sans-serif";
+  g.font="14px \"HP Denki\",sans-serif";
   const swd=g.measureText(st).width,sx=(W-swd)/2,sy=H/2+104;
   rect(sx-8,sy-16,swd+16,24,CB);nRectb(sx-8,sy-16,swd+16,24,theme.ground);
   text(st,sx,sy,14,theme.ground);

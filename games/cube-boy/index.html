@@ -14,7 +14,7 @@
 </head>
 <body>
 <canvas id="cv" width="512" height="512"></canvas>
-<script src="https://oosawak.github.io/html-player/assets/hp.js?v=7"></script>
+<script src="https://oosawak.github.io/html-player/assets/hp.js?v=8"></script>
 <script>
 "use strict";
 // CubeBoy — ダッシュと壁ジャンプの小さなプラットフォーマー（Pyxel版からの作り直し）
@@ -331,9 +331,9 @@ function drawTitle(){
   g.fillStyle=C_BG;g.beginPath();g.arc(103,13,5,0,7);g.fill();
   g.fillStyle=C_WHITE;g.fillRect(58,44,12,12);
   g.fillStyle="#000";g.fillRect(66,46,1,1);
-  g.font="700 13px \"HP Sans\",sans-serif";g.textAlign="center";
+  g.font="700 13px \"HP Denki\",sans-serif";g.textAlign="center";
   g.fillStyle=C_WHITE;g.fillText("CubeBoy",64,76);
-  g.font="6px \"HP Sans\",sans-serif";g.fillStyle=C_YEL;
+  g.font="6px \"HP Denki\",sans-serif";g.fillStyle=C_YEL;
   if(((frame/30)|0)%2===0)g.fillText("Aボタンでスタート",64,90);
   g.fillStyle=C_GRAYC;
   g.fillText("オーブを3つ集めるとボス出現",64,104);
@@ -353,14 +353,14 @@ function stepTitle(){
 function stepEnd(){
     drawScene();
     g.setTransform(4,0,0,4,0,0);
-    g.font="700 11px \"HP Sans\",sans-serif";g.textAlign="center";
+    g.font="700 11px \"HP Denki\",sans-serif";g.textAlign="center";
     if(state==="over"){
       g.fillStyle=C_RED;g.fillText("GAME OVER",64,60);
-      g.font="6px \"HP Sans\",sans-serif";g.fillStyle=C_WHITE;
+      g.font="6px \"HP Denki\",sans-serif";g.fillStyle=C_WHITE;
       g.fillText("Aボタンでもう一度",64,74);
     }else{
       g.fillStyle=C_YEL;g.fillText("GAME CLEAR!",64,60);
-      g.font="6px \"HP Sans\",sans-serif";g.fillStyle=C_WHITE;
+      g.font="6px \"HP Denki\",sans-serif";g.fillStyle=C_WHITE;
       g.fillText("CONGRATULATIONS!",64,72);
       g.fillText("Aボタンでもう一度",64,82);
     }

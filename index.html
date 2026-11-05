@@ -7,59 +7,62 @@
 <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' https://oosawak.github.io; style-src 'unsafe-inline' https://oosawak.github.io; img-src data: blob: https://oosawak.github.io; font-src data: https://oosawak.github.io; media-src data: blob: https://oosawak.github.io; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-src 'self' https:">
 <title>HTMLプレイヤー ― URLで配れるカートリッジ</title>
 <style>
-  body { margin:0; background:#1a1210; color:#f3e9d2; font-family: Georgia, "Hiragino Mincho ProN", serif; }
-  #wrap { max-width: 760px; margin: 0 auto; padding: 12px; }
+  :root { --ink:#39404a; --panel:#eef1e3; --console:#8f979d; --lcd:#8fe388; --lcd2:#57b368; --sub:#5d6852; }
+  body { margin:0; background:linear-gradient(180deg,#c6d1b2,#aebc97); color:var(--ink); font-family:"HP Denki","HP Sans",sans-serif; }
+  #wrap { max-width:760px; margin:0 auto; padding:12px; }
   header { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  h1 { font-size: 20px; letter-spacing: .12em; margin: 6px 0; }
-  h2 { font-size: 16px; letter-spacing:.08em; margin: 22px 0 8px; border-top: 1px solid #5e4630; padding-top: 14px; }
-  .ver { font-size: 11px; color:#c9b48a; border:1px solid #8a6b3f; border-radius: 10px; padding: 1px 8px; }
-  select, input[type="text"], input[type="url"], textarea { background:#2b1a12; color:#f3e9d2; border:1px solid #8a6b3f; border-radius:6px; padding:8px; font-size:14px; box-sizing:border-box; }
-  textarea { width:100%; font-family: ui-monospace, monospace; font-size:12px; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0; }
-  .row > input { flex: 1 1 220px; }
-  button { background:#7c2128; color:#fff; border:1px solid #d8b46a; border-radius:6px; padding:8px 14px; font-size:14px; letter-spacing:.06em; cursor:pointer; font-family:inherit; }
-  button.sub { background:#3a2a1a; }
-  #stage { position:relative; background:#000; border:2px solid #8a6b3f; border-radius:8px; overflow:hidden; }
-  #viewtabs { display:flex; gap:4px; padding:6px 8px 0; background:#2b1a12; }
-  .vtab { background:#3a2a1a; color:#c9b48a; border:1px solid #8a6b3f; border-bottom:none; border-radius:8px 8px 0 0; padding:6px 18px; font-size:13px; }
-  .vtab.on { background:#7c2128; color:#fff; }
+  h1 { font-size:22px; letter-spacing:.08em; margin:6px 0; }
+  h2 { font-size:17px; letter-spacing:.06em; margin:22px 0 8px; border-top:3px solid var(--ink); padding-top:14px; }
+  .ver { font-size:11px; color:var(--ink); background:var(--panel); border:2px solid var(--ink); border-radius:999px; padding:1px 9px; }
+  select, input[type="text"], input[type="url"], textarea { background:#f6f8ef; color:var(--ink); border:3px solid var(--ink); border-radius:12px; padding:9px; font-size:14px; box-sizing:border-box; font-family:inherit; }
+  textarea { width:100%; font-family:ui-monospace,monospace; font-size:12px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .row > input { flex:1 1 220px; }
+  button { background:var(--console); color:#fff; border:3px solid var(--ink); border-radius:12px; padding:8px 14px; font-size:14px; letter-spacing:.04em; cursor:pointer; font-family:inherit; box-shadow:0 3px 0 var(--ink); }
+  button:active { transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
+  button.sub { background:var(--panel); color:var(--ink); }
+  #stage { position:relative; background:#2e343a; border:3px solid var(--ink); border-radius:16px; overflow:hidden; box-shadow:0 6px 0 rgba(57,64,74,.35); }
+  #viewtabs { display:flex; gap:4px; padding:8px 8px 0; background:#2e343a; }
+  .vtab { background:#788089; color:#eef1e3; border:3px solid var(--ink); border-bottom:none; border-radius:10px 10px 0 0; padding:6px 18px; font-size:13px; box-shadow:none; }
+  .vtab:active { transform:none; box-shadow:none; }
+  .vtab.on { background:var(--lcd); color:var(--ink); }
   #screen { position:relative; }
-  iframe { display:block; width:100%; height:72vh; border:0; background:#111; }
-  #listwrap { position:absolute; inset:0; display:none; overflow:auto; background:#20140e; padding:10px; box-sizing:border-box; z-index:4; }
+  iframe { display:block; width:100%; height:72vh; border:0; background:#0e130e; }
+  #listwrap { position:absolute; inset:0; display:none; overflow:auto; background:#cfd8ba; padding:10px; box-sizing:border-box; z-index:4; }
   #listwrap.on { display:block; }
   #listgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .gcard { background:#2b1a12; border:1px solid #8a6b3f; border-radius:8px; overflow:hidden; cursor:pointer; padding:0; text-align:left; font-family:inherit; color:#f3e9d2; }
-  .gcard img { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; object-position:center; background:#111; }
+  .gcard { background:#f6f8ef; border:3px solid var(--ink); border-radius:14px; overflow:hidden; cursor:pointer; padding:0; text-align:left; font-family:inherit; color:var(--ink); box-shadow:0 3px 0 rgba(57,64,74,.4); }
+  .gcard img { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; object-position:center; background:#20262b; }
   .gcard .gt { display:block; padding:6px 8px 2px; font-size:13px; line-height:1.4; letter-spacing:0; }
-  .gcard .gs { display:block; padding:0 8px 8px; font-size:11px; color:#c9b48a; }
-  .gcard.cur { border-color:#d8b46a; box-shadow:0 0 0 2px #7c2128; }
-  #srcwrap { position:absolute; inset:0; display:none; flex-direction:column; gap:8px; background:#20140e; padding:10px; box-sizing:border-box; z-index:4; }
+  .gcard .gs { display:block; padding:0 8px 8px; font-size:11px; color:var(--sub); }
+  .gcard.cur { box-shadow:0 0 0 3px var(--lcd2), 0 3px 0 rgba(57,64,74,.4); }
+  #srcwrap { position:absolute; inset:0; display:none; flex-direction:column; gap:8px; background:#cfd8ba; padding:10px; box-sizing:border-box; z-index:4; }
   #srcwrap.on { display:flex; }
   #srcview { flex:1; resize:none; }
-  #loading { position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(0,0,0,.55); color:#fff; font-size:14px; z-index:5; }
+  #loading { position:absolute; inset:0; display:none; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(46,52,58,.6); color:#fff; font-size:14px; z-index:5; }
   #loading.on { display:flex; }
-  .spin { width:34px; height:34px; border-radius:50%; border:4px solid rgba(255,255,255,.25); border-top-color:#fff; animation:hpspin .9s linear infinite; }
+  .spin { width:34px; height:34px; border-radius:50%; border:4px solid rgba(255,255,255,.25); border-top-color:var(--lcd); animation:hpspin .9s linear infinite; }
   @keyframes hpspin { to { transform:rotate(360deg); } }
-  .note { font-size:12px; color:#b7a67f; line-height:1.7; }
-  .info { font-size:13px; color:#e8d9ae; min-height: 20px; margin: 6px 0; white-space: pre-wrap; }
-  a { color:#e8c87a; }
+  .note { font-size:12px; color:#46503f; line-height:1.8; }
+  .info { font-size:13px; color:var(--ink); min-height:20px; margin:6px 0; white-space:pre-wrap; }
+  a { color:#2e7d32; }
   #mkopen { display:none; }
-  #pad { display:none; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #pad { display:none; justify-content:space-between; align-items:center; gap:10px; margin-top:12px; touch-action:none; user-select:none; -webkit-user-select:none; }
   #pad.on { display:flex; }
   body.has-gamepad #pad { display:none !important; }
   #gpnote { display:none; }
   body.has-gamepad #gpnote { display:block; }
   .cluster { display:flex; gap:6px; align-items:center; }
-  .pbtn { width:52px; height:52px; border-radius:50%; font-size:19px; padding:0; background:#3a2a1a; }
-  .pbtn:active { background:#7c2128; }
-  .pbtn.ab { background:#7c2128; font-size:16px; }
-  .pbtn.ab:active { background:#a83232; }
+  .pbtn { width:52px; height:52px; border-radius:50%; font-size:19px; padding:0; background:var(--panel); color:var(--ink); }
+  .pbtn:active { background:var(--lcd); transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
+  .pbtn.ab { background:#788089; color:#fff; font-size:16px; }
+  .pbtn.ab[data-code="Space"] { background:var(--lcd2); }
 </style>
 </head>
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.44</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.45</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -120,6 +123,7 @@
     <li>hp.js（2D向けの共通部品: 入力・ゲームループ・効果音・UI部品）</li>
     <li>three.js（3D向けライブラリ、r128）</li>
   </ul>
+  <p class="note">文字の標準は、ドットフォントの <b>HP Denki</b> です。色や形のデザイン基準は <a href="https://github.com/oosawak/html-player/blob/main/DESIGN.md" target="_blank" rel="noopener">DESIGN.md</a> にまとめています。</p>
   <p class="note" id="hpapi">hp.js のメソッド: 読み込み中…</p>
 
   <h2>カートリッジのURLを作る</h2>
@@ -173,7 +177,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=44" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=45" : url; // プレイヤー更新時にカートリッジも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -244,7 +248,7 @@ function hpMethods(src){
   }
   return names;
 }
-fetch("assets/hp.js?v=7").then(function(r){ return r.text(); }).then(function(src){
+fetch("assets/hp.js?v=8").then(function(r){ return r.text(); }).then(function(src){
   var el = document.getElementById("hpapi");
   if(!el) return;
   var names = hpMethods(src);
@@ -439,7 +443,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=44")).json();
+    const data = await (await fetch("games.json?v=45")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
