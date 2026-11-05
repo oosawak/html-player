@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' https://oosawak.github.io; style-src 'unsafe-inline' https://oosawak.github.io; img-src data: blob: https://oosawak.github.io; font-src data: https://oosawak.github.io; media-src data: blob: https://oosawak.github.io; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-src 'self' https:">
-<title>HTMLプレイヤー ― URLで配れるカートリッジ</title>
+<title>HTMLカセットプレイヤー ― URLで配れるカセット</title>
 <style>
   :root { --ink:#39404a; --panel:#eef1e3; --console:#8f979d; --lcd:#8fe388; --lcd2:#57b368; --sub:#5d6852; }
   body { margin:0; background:linear-gradient(180deg,#c6d1b2,#aebc97); color:var(--ink); font-family:"HP Denki","HP Sans",sans-serif; }
@@ -62,7 +62,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.45</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.46</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -81,7 +81,7 @@
         <button id="srccopy" class="sub">ソースをコピー</button>
       </div>
       <div class="info" id="srcinfo"></div>
-      <textarea id="srcview" readonly placeholder="ここにカートリッジのソース（HTML）が表示されます"></textarea>
+      <textarea id="srcview" readonly placeholder="ここにカセットのソース（HTML）が表示されます"></textarea>
     </div>
     <div id="listwrap">
       <div id="listgrid"></div>
@@ -110,12 +110,12 @@
     <button id="padbtn" class="sub">コントローラー</button>
     <button id="watchbtn" class="sub">暴走検知 オン</button>
   </div>
-  <p class="note">共有の形は2つあります。通常は <b>#g=カートリッジの場所</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
-  <p class="note">カートリッジ（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
+  <p class="note">共有の形は2つあります。通常は <b>#g=カセットの場所</b>。もう1つは、ゲーム本体を圧縮してURLの中に埋め込む <b>#p=ペイロード</b> 形式です（下のツールで作れます）。</p>
+  <p class="note">カセット（普通のHTMLでできたゲーム）を差し込んで遊ぶ、ブラウザの受け皿です。</p>
   <p class="note">名前の後ろの（共通Lib）は、共通ライブラリー（hp.js）を使っているゲームの印です。</p>
-  <p class="note">収録カートリッジと、埋め込みURL（#p=）のゲームは、すべて隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。外部のURLを指定して読み込むことはできません。</p>
+  <p class="note">収録カセットと、埋め込みURL（#p=）のゲームは、すべて隔離された枠の中で動きます。外のサイトへ通信したり、入力フォームを出したり、他のサイトの記録を読み書きしたりはできません。外部のURLを指定して読み込むことはできません。</p>
   <h2>共通部品はプレイヤー側が持ちます</h2>
-  <p class="note">フォントやアイコン、共通のJavaScriptは、カートリッジには入れず、<b>プレイヤー側が持ってゲームに渡します</b>。そのためカートリッジは小さく作れます。代わりに、それらを使うゲームは単体ファイルだけでは完結しません（プレイヤー上で動かす前提です）。プレイヤーが持っている共通部品は次の通りです。</p>
+  <p class="note">フォントやアイコン、共通のJavaScriptは、カセットには入れず、<b>プレイヤー側が持ってゲームに渡します</b>。そのためカセットは小さく作れます。代わりに、それらを使うゲームは単体ファイルだけでは完結しません（プレイヤー上で動かす前提です）。プレイヤーが持っている共通部品は次の通りです。</p>
   <p class="note">ライブラリーの使用は任意です。使わなくてもゲームは作れます。その場合は、入力の受け取りやゲームループ、効果音などをすべて自前のコードで実装してください。どちらの場合も、埋め込みURLが4,096文字以下に収まることが目標です（ライブラリーを使うと、その分だけゲーム本体を小さくできます）。</p>
   <ul class="note" style="line-height:1.9">
     <li>標準フォント6種（HP Serif／HP Sans／HP Round／HP Mono／HP Dot／HP Denki）</li>
@@ -126,8 +126,8 @@
   <p class="note">文字の標準は、ドットフォントの <b>HP Denki</b> です。色や形のデザイン基準は <a href="https://github.com/oosawak/html-player/blob/main/DESIGN.md" target="_blank" rel="noopener">DESIGN.md</a> にまとめています。</p>
   <p class="note" id="hpapi">hp.js のメソッド: 読み込み中…</p>
 
-  <h2>カートリッジのURLを作る</h2>
-  <p class="note">HTMLファイルがある場所のURLを入れると、その中身を圧縮して「URL埋め込み形式」のURLを作ります。読み込めないサイトの場合は、HTMLを直接貼り付けてください。（圧縮はブラウザ標準の機能で行います。サーバーには送りません）カートリッジの作り方の仕様書は <a href="https://github.com/oosawak/html-player/blob/main/CARTRIDGE.md" target="_blank" rel="noopener">CARTRIDGE.md</a>（AIに読ませて作らせるためのものです）。</p>
+  <h2>カセットのURLを作る</h2>
+  <p class="note">HTMLファイルがある場所のURLを入れると、その中身を圧縮して「URL埋め込み形式」のURLを作ります。読み込めないサイトの場合は、HTMLを直接貼り付けてください。（圧縮はブラウザ標準の機能で行います。サーバーには送りません）カセットの作り方の仕様書は <a href="https://github.com/oosawak/html-player/blob/main/CASSETTE.md" target="_blank" rel="noopener">CASSETTE.md</a>（AIに読ませて作らせるためのものです）。</p>
   <div class="row">
     <input type="url" id="mkurl" placeholder="HTMLファイルのURL（例: https://…/game.html）">
     <button id="mkfetch">URLから作る</button>
@@ -177,7 +177,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=45" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=46" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -335,7 +335,7 @@ document.getElementById("postcopy").onclick = async () => {
 function keyName(code){ return code === "Space" ? " " : code === "KeyX" ? "x" : code; }
 function sendKey(code, down){
   // 隔離された枠にはキーイベントを直接送れないため、postMessageで届ける。
-  // 受け側（hp.js、または hp-key を自分で受けるカートリッジ）がキーの状態に直す。
+  // 受け側（hp.js、または hp-key を自分で受けるカセット）がキーの状態に直す。
   const w = frame.contentWindow; if(!w) return;
   try { w.postMessage({ t: "hp-key", code: code, down: down }, "*"); } catch(e){}
 }
@@ -375,7 +375,7 @@ setInterval(() => {
   if(now - wdLast > 4000){
     wdArmed = false; justStopped = true;
     freshFrame(); showLoading(false);
-    document.getElementById("wdmsg").textContent = "カートリッジの応答が止まったため、停止しました（暴走検知）。リロードで再開できます。";
+    document.getElementById("wdmsg").textContent = "カセットの応答が止まったため、停止しました（暴走検知）。リロードで再開できます。";
   }
 }, 1000);
 
@@ -430,7 +430,7 @@ async function showSource(){
   }
   if(!currentSource){ srcinfo.textContent = "表示できるソースがありません。"; return; }
   srcview.value = currentSource;
-  srcinfo.textContent = "いま動いているカートリッジのソース（HTML）そのものです（" + currentSource.length + "文字）。作り方の参考にどうぞ。";
+  srcinfo.textContent = "いま動いているカセットのソース（HTML）そのものです（" + currentSource.length + "文字）。作り方の参考にどうぞ。";
 }
 tabgame.onclick = hideSource;
 tabsrc.onclick = showSource;
@@ -443,7 +443,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=45")).json();
+    const data = await (await fetch("games.json?v=46")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
