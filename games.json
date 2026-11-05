@@ -109,6 +109,56 @@
    "thumb": "assets/thumbs/neon-maze.jpg",
    "payload": "",
    "chars": 0
+  },
+  {
+   "slug": "neon-maze-3d",
+   "title": "Neon Maze 3D（WASM）",
+   "lib": false,
+   "genre": "パズル",
+   "path": "games/neon-maze-3d/",
+   "thumb": "assets/thumbs/neon-maze-3d.jpg",
+   "payload": "",
+   "chars": 0
+  },
+  {
+   "slug": "animal-doku",
+   "title": "Animal Doku（WASM）",
+   "lib": false,
+   "genre": "パズル",
+   "path": "games/animal-doku/",
+   "thumb": "assets/thumbs/animal-doku.jpg",
+   "payload": "",
+   "chars": 0
+  },
+  {
+   "slug": "earth-defense",
+   "title": "Earth Defense（WASM）",
+   "lib": false,
+   "genre": "シューティング",
+   "path": "games/earth-defense/",
+   "thumb": "assets/thumbs/earth-defense.jpg",
+   "payload": "",
+   "chars": 0
+  },
+  {
+   "slug": "line-boy-pyx",
+   "title": "LINE BOY（Pyxel）",
+   "lib": false,
+   "genre": "アクション",
+   "path": "games/line-boy-pyx/",
+   "thumb": "assets/thumbs/line-boy-pyx.jpg",
+   "payload": "",
+   "chars": 0
+  },
+  {
+   "slug": "cube-boy-pyx",
+   "title": "CubeBoy（Pyxel）",
+   "lib": false,
+   "genre": "パズル",
+   "path": "games/cube-boy-pyx/",
+   "thumb": "assets/thumbs/cube-boy-pyx.jpg",
+   "payload": "",
+   "chars": 0
   }
  ]
 }

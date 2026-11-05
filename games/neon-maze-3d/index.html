@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://oosawak.github.io 'unsafe-inline' 'wasm-unsafe-eval'; connect-src 'self' https://oosawak.github.io; form-action 'none'">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Neon Maze 3D – wgpu WebGL</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── Warp overlay ── */
+#warp-overlay {
+  position:fixed; inset:0; pointer-events:none; z-index:50;
+  opacity:0;
+  mix-blend-mode: screen;
+}
+/* ── Swipe hint arrows (mobile) ── */
+#swipe-hint {
+  position:fixed; inset:0; pointer-events:none; z-index:8;
+  display:flex; align-items:center; justify-content:center;
+}
+#swipe-hint .sh-up    { position:absolute; top:60px;    left:50%; transform:translateX(-50%); }
+#swipe-hint .sh-down  { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); }
+#swipe-hint .sh-left  { position:absolute; left:12px;   top:50%;  transform:translateY(-50%); }
+#swipe-hint .sh-right { position:absolute; right:12px;  top:50%;  transform:translateY(-50%); }
+#swipe-hint span {
+  font-size:2.2em; opacity:0.18; color:#0ff;
+  text-shadow: 0 0 8px #0ff;
+  font-family:'GenInterfaceJP',monospace;
+}
+/* flash when swiped */
+#swipe-hint span.flash { opacity:0.9; transition: opacity 0s; }
+
+/* ── Level-clear banner ── */
+#level-clear {
+  display:none; position:fixed; inset:0; z-index:60;
+  flex-direction:column; align-items:center; justify-content:center;
+  background: rgba(0,0,10,0.78);
+}
+#level-clear h2 {
+  color:#0ff; font-family:'GenInterfaceJP',monospace; font-size:clamp(1.4em,5vw,2.2em);
+  text-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+  margin:0 0 10px; animation: pulse-text 0.7s infinite alternate;
+}
+#level-clear .sub {
+  color:#f0f; font-family:'GenInterfaceJP',monospace; font-size:clamp(0.85em,3vw,1.1em);
+  text-shadow: 0 0 10px #f0f;
+  margin-bottom:24px; text-align:center; padding:0 20px;
+}
+#level-clear button {
+  background:transparent; border:2px solid #0ff;
+  color:#0ff; font-size:clamp(1em,4vw,1.3em); padding:12px 32px;
+  cursor:pointer; font-family:'GenInterfaceJP',monospace;
+  text-shadow:0 0 8px #0ff; box-shadow: 0 0 16px #0ff;
+  transition: background 0.2s; border-radius:8px;
+}
+#level-clear button:active { background: rgba(0,255,255,0.2); }
+@keyframes pulse-text { from{opacity:0.8} to{opacity:1; text-shadow:0 0 30px #0ff, 0 0 60px #0ff;} }
+
+/* ── Title screen ── */
+#title-screen {
+  position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:50;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+#title-screen h1 {
+  color:#0ff; font-family:'GenInterfaceJP',monospace; font-size:clamp(2em,8vw,3.5em);
+  text-shadow: 0 0 20px #0ff, 0 0 50px #0ff, 0 0 80px #0ff;
+  margin:0 0 16px; animation: pulse-text 0.8s infinite alternate;
+}
+#title-screen p { font-family:'GenInterfaceJP',monospace; margin:6px 0; }
+#btn-start {
+  background:transparent; border:2px solid #0ff;
+  color:#0ff; font-size:clamp(1em,4vw,1.4em); padding:14px 40px;
+  cursor:pointer; font-family:'GenInterfaceJP',monospace; margin-top:24px;
+  text-shadow:0 0 8px #0ff; box-shadow: 0 0 20px #0ff;
+  transition: background 0.2s; border-radius:8px;
+}
+#btn-start:active { background: rgba(0,255,255,0.2); }
+#level-label { color:#f0f; font-family:'GenInterfaceJP',monospace; font-size:1.1em;
+  text-shadow:0 0 8px #f0f; }
+#steps-label  { color:#0ff; font-family:'GenInterfaceJP',monospace; font-size:1.1em;
+  text-shadow:0 0 8px #0ff; }
+
+/* ── Minimap ── */
+#minimap {
+  position:fixed; top:50px; right:8px; z-index:20;
+  border:1px solid rgba(0,200,255,0.4);
+  border-radius:4px;
+  background:rgba(0,0,20,0.82);
+  image-rendering:pixelated;
+  width:144px; height:144px;
+  box-shadow: 0 0 8px rgba(0,200,255,0.3);
+}
+</style>
+</head>
+<body>
+
+<!-- Warp effect overlay -->
+<div id="warp-overlay"></div>
+
+<!-- Title screen -->
+<div id="title-screen">
+  <h1>🌀 MAZE 3D</h1>
+  <p style="color:#0ff">Find the exit before the enemy catches you!</p>
+  <div id="best-score-display" style="color:#888; font-family:'GenInterfaceJP',monospace; font-size:0.85em; margin:8px 0;">
+    BEST: <span id="best-steps-val">-</span> steps / LV<span id="best-level-val">-</span>
+    ・Plays: <span id="play-count-val">0</span>
+  </div>
+  <button id="btn-start">▶ START</button>
+  <p style="color:#888;font-size:0.8em">← → turn &nbsp; ↑ forward &nbsp; ↓ back</p>
+  <div style="margin-top:12px; color:#888; font-family:'GenInterfaceJP',monospace; font-size:0.8em;">
+    SE <input type="range" id="vol-se" min="0" max="100" value="100" style="width:80px; vertical-align:middle;">
+    AMB <input type="range" id="vol-amb" min="0" max="100" value="40" style="width:80px; vertical-align:middle;">
+  </div>
+</div>
+
+<!-- Swipe direction hints -->
+<div id="swipe-hint">
+  <span class="sh-up"   id="sh-up">▲</span>
+  <span class="sh-down" id="sh-down">▼</span>
+  <span class="sh-left" id="sh-left">◀</span>
+  <span class="sh-right"id="sh-right">▶</span>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <span id="level-label">LV <b id="level">1</b></span>
+  <span id="steps-label">歩数 <b id="steps">0</b></span>
+  <span style="color:#888;font-family:'GenInterfaceJP',monospace;font-size:0.85em;">合計 <b id="total-steps" style="color:#aaa">0</b></span>
+  <span id="theme-label" style="color:#ff0; font-family:'GenInterfaceJP',monospace; font-size:0.9em; text-shadow:0 0 6px #ff0; opacity:0.8;"></span>
+  <button id="btn-reset">リセット</button>
+</div>
+
+<!-- Canvas -->
+<div id="canvas-wrap">
+  <canvas id="maze3d-canvas"></canvas>
+</div>
+
+<!-- Minimap (top-right overlay) -->
+<canvas id="minimap" width="144" height="144"></canvas>
+
+<!-- D-pad (desktop fallback, hidden on narrow screens) -->
+<div id="dpad">
+  <button class="db" id="db-up">▲</button>
+  <div id="dpad-mid">
+    <button class="db" id="db-left">◀</button>
+    <div class="db" id="db-center"></div>
+    <button class="db" id="db-right">▶</button>
+  </div>
+  <button class="db" id="db-down">▼</button>
+</div>
+
+<!-- Level-clear overlay -->
+<div id="level-clear">
+  <h2>🎉 LEVEL CLEAR! 🎉</h2>
+  <p class="sub" id="clear-steps"></p>
+  <button id="btn-next">NEXT LEVEL ▶</button>
+</div>
+
+<!-- Game Over overlay -->
+<div id="game-over" style="display:none; position:fixed; inset:0; z-index:60;
+     flex-direction:column; align-items:center; justify-content:center;
+     background:rgba(20,0,0,0.85);">
+  <h2 style="color:#f00; font-family:'GenInterfaceJP',monospace; font-size:clamp(1.6em,6vw,2.5em);
+       text-shadow:0 0 20px #f00, 0 0 40px #f00; margin:0 0 12px;
+       animation:pulse-text 0.5s infinite alternate;">💀 CAUGHT! 💀</h2>
+  <p style="color:#f88; font-family:'GenInterfaceJP',monospace; font-size:clamp(0.9em,3vw,1.2em);
+      text-shadow:0 0 8px #f44; margin-bottom:24px;">敵に捕まりました</p>
+  <button id="btn-retry" style="background:transparent; border:2px solid #f00;
+      color:#f00; font-size:clamp(1em,4vw,1.3em); padding:12px 32px;
+      cursor:pointer; font-family:'GenInterfaceJP',monospace; text-shadow:0 0 8px #f00;
+      box-shadow:0 0 16px #f00; border-radius:8px;">RETRY ↺</button>
+</div>
+
+<!-- Loading overlay -->
+<div id="loading" style="position:fixed;inset:0;background:#000008;display:flex;
+     align-items:center;justify-content:center;z-index:999;
+     color:#0ff;font-family:'GenInterfaceJP',monospace;font-size:1.2em;text-align:center;">
+  <div>
+    <div class="spin"></div>
+    <p style="margin-top:14px">LOADING wgpu WebGL…</p>
+  </div>
+</div>
+
+<script type="module">
+import init, * as wasm from './wasm/wasm_app.js';
+import { FontLoader, AudioEngine, InputManager, CanvasManager } from './engine.js';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+//  0 = forward  1 = turn-left  2 = turn-right  3 = backward
+const KEYMAP = {
+  ArrowUp:0, KeyW:0, ArrowLeft:1, KeyA:1,
+  ArrowRight:2, KeyD:2, ArrowDown:3, KeyS:3,
+};
+
+// ── Engine instances ───────────────────────────────────────────────────────────
+const audio  = new AudioEngine();
+const input  = new InputManager({ swipeMin: 35 });
+const canvas = new CanvasManager('maze3d-canvas', { hudHeight: 44, dpadHeight: 160 });
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const warpEl  = document.getElementById('warp-overlay');
+const clearEl = document.getElementById('level-clear');
+let initialized   = false;
+let clearShown    = false;
+let gameOverShown = false;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function start() {
+  await init('./wasm/wasm_app_bg.wasm');
+  canvas.resize();
+  canvas.bindResize();
+
+  // フォント: WASM埋め込み → カスタムURL → engine.js隣の fonts/ の順で自動解決
+  await FontLoader.load('GenInterfaceJP', wasm);
+
+  await wasm.init_maze3d('maze3d-canvas');
+  document.getElementById('loading').style.display = 'none';
+  initialized = true;
+
+  // 保存済み音量を読み込んでスライダーに反映
+  audio.seVolume  = wasm.load_se_vol_maze3d();
+  audio.ambVolume = wasm.load_amb_vol_maze3d();
+  document.getElementById('vol-se').value  = Math.round(audio.seVolume  * 100);
+  document.getElementById('vol-amb').value = Math.round(audio.ambVolume * 100);
+
+  loadSoundDefs();
+
+  // 音量スライダー
+  document.getElementById('vol-se').addEventListener('input', e => {
+    audio.setSeVolume(e.target.value / 100);
+    wasm.save_audio_vol_maze3d(audio.seVolume, audio.ambVolume);
+  });
+  document.getElementById('vol-amb').addEventListener('input', e => {
+    audio.setAmbVolume(e.target.value / 100);
+    wasm.save_audio_vol_maze3d(audio.seVolume, audio.ambVolume);
+  });
+
+  // 入力バインド
+  input.onAction(action => { if (initialized) wasm.move_maze3d(action); });
+  input.bindKeyboard(KEYMAP);
+  input.bindDpad(
+    [['db-up',0],['db-left',1],['db-right',2],['db-down',3]],
+    () => audio.ensure()
+  );
+  input.bindSwipe(['#level-clear', '#hud', '#dpad'], {
+    onHint:  flashHint,
+    onStart: () => audio.ensure(),
+  });
+
+  // ボタンイベント
+  document.getElementById('btn-start').addEventListener('click', () => {
+    audio.ensure();
+    wasm.start_game_maze3d();
+    document.getElementById('title-screen').style.display = 'none';
+  });
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    wasm.start_game_maze3d();
+    clearEl.style.display = 'none';
+    document.getElementById('game-over').style.display = 'none';
+    clearShown = gameOverShown = false;
+    warpEl.style.opacity = '0';
+  });
+  document.getElementById('btn-next').addEventListener('click', () => {
+    wasm.next_level_maze3d();
+    clearEl.style.display = 'none';
+    clearShown = false;
+    warpEl.style.opacity = '0';
+  });
+  document.getElementById('btn-retry').addEventListener('click', () => {
+    wasm.start_game_maze3d();
+    document.getElementById('game-over').style.display = 'none';
+    gameOverShown = clearShown = false;
+    warpEl.style.opacity = '0';
+  });
+
+  requestAnimationFrame(loop);
+}
+
+// ── Game loop ─────────────────────────────────────────────────────────────────
+function loop(ts) {
+  if (!initialized) return;
+  wasm.tick_maze3d(ts);
+
+  const scene = wasm.scene_maze3d(); // 0=Title 1=Playing 2=LevelClear 3=GameOver
+
+  document.getElementById('title-screen').style.display = scene === 0 ? 'flex' : 'none';
+  if (scene === 0) {
+    const bs = wasm.best_steps_maze3d();
+    document.getElementById('best-steps-val').textContent = bs === 0 ? '-' : bs;
+    document.getElementById('best-level-val').textContent = wasm.best_level_maze3d();
+    document.getElementById('play-count-val').textContent = wasm.play_count_maze3d();
+  }
+
+  document.getElementById('steps').textContent       = wasm.steps_maze3d();
+  document.getElementById('total-steps').textContent = wasm.total_steps_maze3d();
+  document.getElementById('level').textContent       = wasm.level_maze3d();
+  const tEl = document.getElementById('theme-label');
+  if (tEl) tEl.textContent = wasm.theme_name_maze3d();
+
+  updateEffects();
+  pollAudio();
+
+  if (scene === 3 && !gameOverShown) {
+    gameOverShown = true;
+    document.getElementById('game-over').style.display = 'flex';
+  }
+  if (scene !== 3 && gameOverShown) {
+    gameOverShown = false;
+    document.getElementById('game-over').style.display = 'none';
+  }
+  if (scene === 2 && !clearShown && wasm.warp_done_maze3d()) {
+    clearShown = true;
+    document.getElementById('clear-steps').textContent =
+      `このレベル: ${wasm.steps_maze3d()} 歩 ／ 合計: ${wasm.total_steps_maze3d()} 歩`;
+    clearEl.style.display = 'flex';
+  }
+  if (scene !== 2 && clearShown) {
+    clearShown = false;
+    clearEl.style.display = 'none';
+  }
+
+  drawMinimap();
+  requestAnimationFrame(loop);
+}
+
+// ── Visual effects ────────────────────────────────────────────────────────────
+function updateEffects() {
+  const w = wasm.warp_maze3d();
+  if (w > 0.01) {
+    warpEl.style.opacity    = w * 0.75;
+    warpEl.style.background =
+      `radial-gradient(ellipse at center,
+        rgba(160,0,255,${w*0.5}) 0%,
+        rgba(0,180,255,${w*0.25}) 50%,
+        rgba(255,0,200,${w*0.55}) 100%)`;
+    warpEl.style.boxShadow = `inset 0 0 ${20+w*80}px rgba(0,255,255,${w*0.7})`;
+  } else {
+    warpEl.style.opacity = '0';
+  }
+}
+
+// ── Minimap ───────────────────────────────────────────────────────────────────
+const minimapCanvas = document.getElementById('minimap');
+const mmCtx = minimapCanvas.getContext('2d');
+const MM_W = 9, MM_H = 9, CELL = 14;
+const N_FLAG = 1, E_FLAG = 2, S_FLAG = 4, W_FLAG = 8;
+
+function drawMinimap() {
+  if (!initialized) return;
+  const mazeBytes = wasm.maze_data_maze3d();
+  const px = wasm.player_x_maze3d();
+  const pz = wasm.player_z_maze3d();
+  const facing = wasm.player_facing_maze3d();
+
+  mmCtx.clearRect(0, 0, 144, 144);
+  mmCtx.fillStyle = 'rgba(0,0,20,0.0)';
+  mmCtx.fillRect(0, 0, 144, 144);
+
+  for (let cz = 0; cz < MM_H; cz++) {
+    for (let cx = 0; cx < MM_W; cx++) {
+      const x0 = cx * CELL + 1, y0 = cz * CELL + 1;
+      const walls = mazeBytes[cz * MM_W + cx];
+      if (cx === px && cz === pz) {
+        mmCtx.fillStyle = 'rgba(0,255,255,0.18)';
+        mmCtx.fillRect(x0, y0, CELL-1, CELL-1);
+      }
+      if (cx === MM_W-1 && cz === MM_H-1) {
+        mmCtx.fillStyle = 'rgba(255,0,220,0.35)';
+        mmCtx.fillRect(x0, y0, CELL-1, CELL-1);
+      }
+      if (cx === 0 && cz === 0) {
+        mmCtx.fillStyle = 'rgba(0,255,100,0.25)';
+        mmCtx.fillRect(x0, y0, CELL-1, CELL-1);
+      }
+      mmCtx.strokeStyle = 'rgba(0,200,255,0.85)';
+      mmCtx.lineWidth = 1.5;
+      if (walls & N_FLAG) { mmCtx.beginPath(); mmCtx.moveTo(x0, y0); mmCtx.lineTo(x0+CELL-1, y0); mmCtx.stroke(); }
+      if (walls & S_FLAG) { mmCtx.beginPath(); mmCtx.moveTo(x0, y0+CELL-1); mmCtx.lineTo(x0+CELL-1, y0+CELL-1); mmCtx.stroke(); }
+      if (walls & W_FLAG) { mmCtx.beginPath(); mmCtx.moveTo(x0, y0); mmCtx.lineTo(x0, y0+CELL-1); mmCtx.stroke(); }
+      if (walls & E_FLAG) { mmCtx.beginPath(); mmCtx.moveTo(x0+CELL-1, y0); mmCtx.lineTo(x0+CELL-1, y0+CELL-1); mmCtx.stroke(); }
+    }
+  }
+
+  const facingIdx = facing === 1 ? 0 : facing === 2 ? 1 : facing === 4 ? 2 : 3;
+  const facingAngle = [-Math.PI/2, 0, Math.PI/2, Math.PI][facingIdx];
+  const cx2 = px * CELL + CELL/2 + 1;
+  const cy2 = pz * CELL + CELL/2 + 1;
+
+  const coneAngle = Math.PI / 3;
+  const coneR = CELL * 2.2;
+  mmCtx.save();
+  mmCtx.fillStyle = 'rgba(255,220,0,0.13)';
+  mmCtx.beginPath();
+  mmCtx.moveTo(cx2, cy2);
+  mmCtx.arc(cx2, cy2, coneR, facingAngle - coneAngle/2, facingAngle + coneAngle/2);
+  mmCtx.closePath();
+  mmCtx.fill();
+  mmCtx.strokeStyle = 'rgba(255,220,0,0.5)';
+  mmCtx.lineWidth = 1;
+  mmCtx.beginPath();
+  mmCtx.moveTo(cx2, cy2);
+  mmCtx.lineTo(cx2 + Math.cos(facingAngle - coneAngle/2)*coneR,
+               cy2 + Math.sin(facingAngle - coneAngle/2)*coneR);
+  mmCtx.moveTo(cx2, cy2);
+  mmCtx.lineTo(cx2 + Math.cos(facingAngle + coneAngle/2)*coneR,
+               cy2 + Math.sin(facingAngle + coneAngle/2)*coneR);
+  mmCtx.stroke();
+  mmCtx.restore();
+
+  mmCtx.save();
+  mmCtx.fillStyle = '#fff';
+  mmCtx.shadowColor = '#0ff';
+  mmCtx.shadowBlur = 6;
+  mmCtx.beginPath();
+  mmCtx.arc(cx2, cy2, 3.5, 0, Math.PI*2);
+  mmCtx.fill();
+  mmCtx.restore();
+
+  const tipX = cx2 + Math.cos(facingAngle) * 5.5;
+  const tipY = cy2 + Math.sin(facingAngle) * 5.5;
+  const baseL = facingAngle + Math.PI*0.75;
+  const baseR = facingAngle - Math.PI*0.75;
+  mmCtx.save();
+  mmCtx.fillStyle = '#ffe040';
+  mmCtx.shadowColor = '#ffc000';
+  mmCtx.shadowBlur = 5;
+  mmCtx.beginPath();
+  mmCtx.moveTo(tipX, tipY);
+  mmCtx.lineTo(cx2 + Math.cos(baseL)*4, cy2 + Math.sin(baseL)*4);
+  mmCtx.lineTo(cx2 + Math.cos(baseR)*4, cy2 + Math.sin(baseR)*4);
+  mmCtx.closePath();
+  mmCtx.fill();
+  mmCtx.restore();
+
+  mmCtx.save();
+  mmCtx.font = "bold 8px 'GenInterfaceJP', monospace";
+  mmCtx.textAlign = 'center';
+  mmCtx.textBaseline = 'middle';
+  const compassLabels = [['N',72,5],['S',72,139],['W',5,72],['E',139,72]];
+  for (const [lbl, lx, ly] of compassLabels) {
+    const isActive = (lbl==='N'&&facingIdx===0)||(lbl==='E'&&facingIdx===1)||
+                     (lbl==='S'&&facingIdx===2)||(lbl==='W'&&facingIdx===3);
+    mmCtx.fillStyle = isActive ? '#ffe040' : 'rgba(0,200,255,0.55)';
+    mmCtx.shadowColor = isActive ? '#ffc000' : 'transparent';
+    mmCtx.shadowBlur  = isActive ? 4 : 0;
+    mmCtx.fillText(lbl, lx, ly);
+  }
+  mmCtx.restore();
+
+  mmCtx.save();
+  mmCtx.fillStyle = '#ff00dd';
+  mmCtx.shadowColor = '#ff00dd';
+  mmCtx.shadowBlur = 4;
+  mmCtx.beginPath();
+  mmCtx.arc((MM_W-1)*CELL + CELL/2 + 1, (MM_H-1)*CELL + CELL/2 + 1, 3, 0, Math.PI*2);
+  mmCtx.fill();
+  mmCtx.restore();
+
+  const ex = wasm.enemy_x_maze3d();
+  const ez = wasm.enemy_z_maze3d();
+  if (ex >= 0) {
+    mmCtx.save();
+    mmCtx.fillStyle = '#ff2020';
+    mmCtx.shadowColor = '#ff0000';
+    mmCtx.shadowBlur = 6;
+    mmCtx.beginPath();
+    mmCtx.arc(ex * CELL + 1, ez * CELL + 1, 3.5, 0, Math.PI*2);
+    mmCtx.fill();
+    mmCtx.restore();
+  }
+}
+
+// ── Swipe hint ────────────────────────────────────────────────────────────────
+const shMap = [
+  document.getElementById('sh-up'),
+  document.getElementById('sh-left'),
+  document.getElementById('sh-right'),
+  document.getElementById('sh-down'),
+];
+function flashHint(action) {
+  const el = shMap[action];
+  if (!el) return;
+  el.classList.add('flash');
+  setTimeout(() => { el.classList.remove('flash'); el.style.transition='opacity 0.4s'; }, 80);
+}
+
+// ── Sound definitions ─────────────────────────────────────────────────────────
+let soundDefs = {};
+function loadSoundDefs() {
+  for (let i = 1; i <= 7; i++) soundDefs[i] = JSON.parse(wasm.sound_def_maze3d(i));
+}
+
+// ── Audio polling ─────────────────────────────────────────────────────────────
+function pollAudio() {
+  if (!initialized) return;
+  const ev = wasm.audio_event_maze3d();
+  if (ev === 0) return;
+  audio.ensure();
+  switch (ev) {
+    case 1: audio.play(soundDefs[wasm.audio_step_parity_maze3d() ? 1 : 2], audio.seVolume); break;
+    case 2: audio.play(soundDefs[3], audio.seVolume); break;
+    case 3: audio.play(soundDefs[4], audio.seVolume); break;
+    case 4: audio.play(soundDefs[5], audio.seVolume); break;
+    case 5: audio.play(soundDefs[6], audio.seVolume); break;
+    case 6: audio.play(soundDefs[7], audio.seVolume); break;
+  }
+}
+
+start();
+</script>
+
+<script>
+/* 入力ブリッジ: 物理ゲームパッドと画面コントローラーの入力を、キー操作に変換する */
+(function(){
+  "use strict";
+  function fire(type, code){
+    document.dispatchEvent(new KeyboardEvent(type, {code: code, key: code === "Space" ? " " : code, bubbles: true, cancelable: true}));
+  }
+  var held = {};
+  function set(code, down){
+    if (held[code] === down) return;
+    held[code] = down;
+    fire(down ? "keydown" : "keyup", code);
+  }
+  addEventListener("message", function(e){
+    var d = e.data;
+    if (!d || d.t !== "hp-key" || typeof d.code !== "string") return;
+    set(d.code, !!d.down);
+  });
+  var MAP = [[12,"ArrowUp"],[13,"ArrowDown"],[14,"ArrowLeft"],[15,"ArrowRight"],[0,"Space"],[1,"KeyX"],[2,"KeyZ"],[3,"KeyC"],[4,"ShiftLeft"],[5,"ShiftRight"]];
+  var sysPrev = {6:false, 7:false};
+  setInterval(function(){
+    var gps;
+    try { gps = navigator.getGamepads ? navigator.getGamepads() : []; } catch(e){ return; }
+    var gp = null;
+    for (var i = 0; i < gps.length; i++) { if (gps[i]) { gp = gps[i]; break; } }
+    if (!gp) return;
+    var b = gp.buttons || [], ax = gp.axes || [];
+    function btn(n){ return !!(b[n] && b[n].pressed); }
+    for (var j = 0; j < MAP.length; j++) {
+      var code = MAP[j][1], down = btn(MAP[j][0]);
+      if (code === "ArrowLeft") down = down || ax[0] < -0.5;
+      if (code === "ArrowRight") down = down || ax[0] > 0.5;
+      if (code === "ArrowUp") down = down || ax[1] < -0.5;
+      if (code === "ArrowDown") down = down || ax[1] > 0.5;
+      set(code, down);
+    }
+    [6, 7].forEach(function(n){
+      var down = btn(n);
+      if (down && !sysPrev[n]) { try { parent.postMessage({t: "hp-sys", btn: n === 6 ? "l2" : "r2"}, "*"); } catch(e){} }
+      sysPrev[n] = down;
+    });
+  }, 16);
+})();
+</script>
+</body>
+</html>
