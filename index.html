@@ -33,6 +33,10 @@
   #listgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .gcard { background:#f6f8ef; border:3px solid var(--ink); border-radius:14px; overflow:hidden; cursor:pointer; padding:0; text-align:left; font-family:inherit; color:var(--ink); box-shadow:0 3px 0 rgba(57,64,74,.4); }
   .gcard img { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; object-position:center; background:#20262b; }
+  /* 一覧は黒基調のダークテーマ（画面は締める。アイコンの色味には寄せない） */
+  #listwrap { background:radial-gradient(120% 110% at 50% 0%, #151c28 0%, #0a0d13 62%); }
+  #listwrap .gcard { background:#10151f; border-color:#2b3648; color:#dbe6f5; box-shadow:0 3px 0 rgba(0,0,0,.55); }
+  #listwrap .gcard .gt { color:#dbe6f5; }
   .gcard .gt { display:block; padding:6px 8px 2px; font-size:13px; line-height:1.4; letter-spacing:0; }
   .gcard .gs { display:block; padding:0 8px 8px; font-size:11px; color:var(--sub); }
   .gcard.cur { box-shadow:0 0 0 3px var(--lcd2), 0 3px 0 rgba(57,64,74,.4); }
@@ -61,12 +65,16 @@
   .pbtn.ab[data-code="Space"] { background:var(--lcd2); }
   body.appmode { background:#20262b; }
   body.appmode #viewtabs { display:none; }
-  body.appmode .gcard { position:relative; }
-  body.appmode .gcard .gt { position:absolute; left:0; right:0; bottom:0; background:rgba(143,227,136,.92); padding:2px 4px; font-size:12px; }
+  body.appmode .gcard { display:flex; flex-direction:column; }
+  body.appmode .gcard img { aspect-ratio:4/3; }
+  body.appmode .gcard .gt { padding:6px 4px 7px; font-size:13px; text-align:center; }
   body.appmode #wrap { max-width:none; padding:0; }
   body.appmode #stage { border:none; border-radius:0; box-shadow:none; }
   body.appmode iframe { height:100dvh; }
-  body.appmode #listwrap { padding:14px; }
+  body.appmode #listwrap { padding:52px 16px 16px; }
+  body.appmode #listwrap.on { display:block; }
+  body.appmode #listgrid { grid-template-columns:repeat(4, 1fr); gap:12px; overflow-y:auto; max-height:100%; padding:2px; }
+  body.appmode .gcard:focus-visible { outline:3px solid #4fe3ff; outline-offset:2px; box-shadow:0 0 18px rgba(79,227,255,.5); }
   body.appmode .gcard .gs { display:none; }
   #startwrap { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:linear-gradient(180deg,#c6d1b2,#aebc97); z-index:6; cursor:pointer; }
   #startwrap.on { display:flex; }
@@ -74,19 +82,26 @@
   .stitle { font-size:22px; letter-spacing:.1em; color:var(--ink); }
   .spush { font-size:16px; letter-spacing:.3em; color:var(--ink); animation:hpblink 1.2s steps(2) infinite; }
   @keyframes hpblink { 50% { opacity:0; } }
-  body.appmode #listwrap.on { display:flex; gap:10px; }
-  body.appmode #listgrid { flex:1; grid-template-columns:repeat(4, 1fr); align-content:start; }
+  /* ジャンルメニュー: 普段は隠れていて、左上のボタン／R2 で左から出る */
   #genrebar { display:none; }
-  body.appmode #genrebar { display:flex; flex-direction:column; gap:8px; width:150px; flex:none; }
-  #genrebar button.on { background:var(--lcd); color:var(--ink); }
-  #appback { position:fixed; top:10px; right:10px; z-index:60; opacity:.88; display:none; }
+  body.appmode #genrebar { display:flex; flex-direction:column; gap:8px; position:absolute; top:0; left:0; bottom:0; width:196px; padding:56px 12px 14px; background:rgba(10,13,19,.96); border-right:2px solid #2b3648; z-index:8; transform:translateX(-105%); transition:transform .18s ease; overflow-y:auto; }
+  body.appmode #genrebar.open { transform:translateX(0); }
+  body.appmode #genrebar button { background:#141a26; color:#b9c7da; border:2px solid #2b3648; text-align:left; }
+  body.appmode #genrebar button.on { background:#0f2f22; border-color:#57b368; color:#c9ffd9; }
+  body.appmode #genrebar .dlbtn { margin-top:auto; background:#12283a; border-color:#2f5d7d; color:#cfeeff; text-align:center; }
+  #menubtn { display:none; }
+  body.appmode #menubtn { display:block; position:absolute; top:10px; left:10px; z-index:9; background:#141a26; color:#dbe6f5; border:2px solid #2b3648; }
+  #startwrap { background:radial-gradient(120% 110% at 50% 0%, #151c28 0%, #0a0d13 62%); }
+  .stitle { color:#e6f2ff; }
+  .spush { color:#4fe3ff; }
+  #appback { position:fixed; top:10px; left:10px; z-index:60; opacity:.92; display:none; background:#141a26; color:#dbe6f5; border:2px solid #2b3648; }
   body.appmode #appback.on { display:block; }
 </style>
 </head>
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.49</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.50</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -108,7 +123,7 @@
       <div class="info" id="srcinfo"></div>
       <textarea id="srcview" readonly placeholder="ここにカセットのソース（HTML）が表示されます"></textarea>
     </div>
-    <div id="listwrap">
+    <div id="listwrap"><button id="menubtn">R1/R2 ☰ ジャンル</button>
       <div id="listgrid"></div>
     </div>
     </div>
@@ -204,7 +219,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=49" : url; // プレイヤー更新時にカセットも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=50" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -443,6 +458,7 @@ setInterval(() => {
     if (best) { best.focus(); best.scrollIntoView({ block: "nearest" }); }
   }
   setInterval(function(){
+    if (window.__APPMODE__) return;
     var g = padState();
     if (!g) { lastDir = null; prevA = prevB = false; return; }
     var ae = document.activeElement;
@@ -556,7 +572,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=49")).json();
+    const data = await (await fetch("games.json?v=50")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
@@ -579,12 +595,21 @@ async function loadRegistry(){
     if (genres.length) {
       const bar = document.createElement("div");
       bar.id = "genrebar";
-      const mk = (label, val) => { const b = document.createElement("button"); b.textContent = label; if (!val) b.classList.add("on"); b.onclick = () => { genreFilter = val; bar.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); buildList(); const c = document.querySelector(".gcard"); if (c) c.focus(); }; return b; };
+      const mk = (label, val) => { const b = document.createElement("button"); b.textContent = label; if (!val) b.classList.add("on"); b.onclick = () => { genreFilter = val; bar.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); buildList(); if (window.__hpCloseMenu) window.__hpCloseMenu(false); const c = document.querySelector(".gcard"); if (c) c.focus(); }; return b; };
       bar.appendChild(mk("すべて", ""));
       genres.forEach(g => bar.appendChild(mk(g, g)));
+      const dl = document.createElement("button");
+      dl.className = "dlbtn";
+      let dlDone = false;
+      try { dlDone = localStorage.getItem("hpdl") === "1"; } catch(e){}
+      dl.textContent = dlDone ? "ダウンロード済み（オフライン可）" : "⬇ ダウンロード（オフライン用）";
+      dl.onclick = () => { if (window.__hpDownload) window.__hpDownload(dl); };
+      bar.appendChild(dl);
       listwrap.insertBefore(bar, document.getElementById("listgrid"));
     }
-    setView("start");
+    showList();
+    const c0 = document.querySelector(".gcard");
+    if (c0) c0.focus();
   }
 }
 /* ---- app mode ---- */
@@ -595,44 +620,121 @@ if (window.__APPMODE__) {
   });
   const appback = document.createElement("button");
   appback.id = "appback";
-  appback.textContent = "\u2630 一覧";
+  appback.textContent = "R2 ☰ 一覧";
   appback.onclick = () => { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); };
   document.body.appendChild(appback);
-  let prevL2 = false, prevR2 = false, prevStart = false, prevA2 = false;
-  startwrap.onclick = () => { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); };
+  const menubtn = document.getElementById("menubtn");
+  function genreBar(){ return document.getElementById("genrebar"); }
+  function menuIsOpen(){ const b = genreBar(); return !!(b && b.classList.contains("open")); }
+  function openMenu(){
+    const b = genreBar(); if (!b) return;
+    b.classList.add("open");
+    const cur = b.querySelector("button.on") || b.querySelector("button");
+    if (cur) cur.focus();
+  }
+  function closeMenu(toCard){
+    const b = genreBar(); if (b) b.classList.remove("open");
+    if (toCard) { const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
+  }
+  window.__hpOpenMenu = openMenu;
+  window.__hpCloseMenu = closeMenu;
+  if (menubtn) menubtn.onclick = () => { menuIsOpen() ? closeMenu(false) : openMenu(); };
+  if ("serviceWorker" in navigator) { try { const rp = navigator.serviceWorker.register("sw.js"); if (rp && rp.catch) rp.catch(() => {}); } catch(e){} }
+  window.__hpDownload = async (btn) => {
+    try {
+      btn.disabled = true;
+      const man = await (await fetch("sw-manifest.json")).json();
+      const cache = await caches.open("hp-v50");
+      const files = ["./", "index.html"].concat(man.files);
+      let done = 0;
+      for (const f of files) {
+        try { const res = await fetch(f); if (res.ok) await cache.put(f, res); } catch(e){}
+        done++;
+        btn.textContent = "ダウンロード中 " + done + "/" + files.length;
+      }
+      btn.textContent = "ダウンロード済み（オフライン可）";
+      try { localStorage.setItem("hpdl", "1"); } catch(e){}
+    } catch(e) {
+      btn.textContent = "ダウンロードに失敗しました";
+      btn.disabled = false;
+    }
+  };
   addEventListener("message", (e) => {
     const d = e.data;
     if (!d || d.t !== "hp-sys") return;
-    if (d.btn === "l2" && !listwrap.classList.contains("on") && !startwrap.classList.contains("on")) { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
-    if (d.btn === "r2" && listwrap.classList.contains("on")) { const ae = document.activeElement; const card = (ae && ae.classList && ae.classList.contains("gcard")) ? ae : (document.querySelector(".gcard.cur") || document.querySelector(".gcard")); if (card) { card.click(); frame.focus(); } }
+    if (!listwrap.classList.contains("on")) { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
   });
+  function appCandidates(){
+    if (menuIsOpen()) return Array.prototype.slice.call(genreBar().querySelectorAll("button"));
+    const out = [];
+    if (menubtn) out.push(menubtn);
+    document.querySelectorAll(".gcard").forEach(c => out.push(c));
+    return out;
+  }
+  function appMove(dir){
+    const list = appCandidates();
+    if (!list.length) return;
+    const ctr = e => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+    const cur = document.activeElement;
+    if (!cur || list.indexOf(cur) < 0) { list[0].focus(); return; }
+    const c = ctr(cur); let best = null, bs = 1e18;
+    list.forEach(e => {
+      if (e === cur) return;
+      const p = ctr(e), dx = p.x - c.x, dy = p.y - c.y;
+      let ok = false, main = 0, cross = 0;
+      if (dir === "left") { ok = dx < -4; main = -dx; cross = Math.abs(dy); }
+      if (dir === "right") { ok = dx > 4; main = dx; cross = Math.abs(dy); }
+      if (dir === "up") { ok = dy < -4; main = -dy; cross = Math.abs(dx); }
+      if (dir === "down") { ok = dy > 4; main = dy; cross = Math.abs(dx); }
+      if (!ok) return;
+      const s = main + cross * 2.2;
+      if (s < bs) { bs = s; best = e; }
+    });
+    if (best) { best.focus(); best.scrollIntoView({ block: "nearest" }); }
+  }
+  function enterFocused(){
+    const ae = document.activeElement;
+    if (menuIsOpen()) { if (ae && ae.click) ae.click(); return; }
+    const card = (ae && ae.classList && ae.classList.contains("gcard")) ? ae : (document.querySelector(".gcard.cur") || document.querySelector(".gcard"));
+    if (card) { card.click(); frame.focus(); }
+  }
+  let pL2 = false, pR2 = false, pR1 = false, pA = false, pB = false, lastDir = null, dirStart = 0, lastStep = 0;
   setInterval(() => {
-    const listOn = listwrap.classList.contains("on");
-    const startOn = startwrap.classList.contains("on");
-    appback.classList.toggle("on", !listOn && !startOn);
     let g = null;
-    try { const gs = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < gs.length; i++) { if (gs[i] && gs[i].connected) { g = gs[i]; break; } } } catch(e){}
-    if (!g) { prevL2 = prevR2 = prevStart = prevA2 = false; return; }
-    const l2 = !!(g.buttons[6] && g.buttons[6].pressed), r2 = !!(g.buttons[7] && g.buttons[7].pressed);
-    const startBtn = !!(g.buttons[9] && g.buttons[9].pressed), aBtn = !!(g.buttons[0] && g.buttons[0].pressed);
-    if (startOn) {
-      if ((startBtn && !prevStart) || (aBtn && !prevA2) || (r2 && !prevR2)) { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
-      prevStart = startBtn; prevA2 = aBtn; prevL2 = l2; prevR2 = r2; return;
+    try { const gs = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < gs.length; i++) { if (gs[i]) { g = gs[i]; break; } } } catch(e){}
+    const listOn = listwrap.classList.contains("on");
+    appback.classList.toggle("on", !listOn);
+    if (!g) { pL2 = pR2 = pR1 = pA = pB = false; lastDir = null; return; }
+    const B = n => !!(g.buttons[n] && g.buttons[n].pressed);
+    const l2 = B(6), r2 = B(7), r1 = B(5), a = B(0), b = B(1);
+    let dir = null;
+    if (B(12)) dir = "up"; else if (B(13)) dir = "down"; else if (B(14)) dir = "left"; else if (B(15)) dir = "right";
+    else { const x = g.axes[0] || 0, y = g.axes[1] || 0; if (Math.abs(x) > Math.abs(y)) { if (x < -0.6) dir = "left"; if (x > 0.6) dir = "right"; } else { if (y < -0.6) dir = "up"; if (y > 0.6) dir = "down"; } }
+    if (listOn) {
+      const now = Date.now();
+      if (dir) {
+        if (dir !== lastDir) { appMove(dir); lastDir = dir; dirStart = now; lastStep = now; }
+        else if (now - dirStart > 380 && now - lastStep > 150) { appMove(dir); lastStep = now; }
+      } else lastDir = null;
+      if (menuIsOpen()) {
+        if ((a && !pA) || (b && !pB)) enterFocused();
+        if ((r2 && !pR2) || (r1 && !pR1) || (l2 && !pL2)) closeMenu(true);
+      } else {
+        if ((a && !pA) || (b && !pB)) enterFocused();
+        if ((r2 && !pR2) || (r1 && !pR1)) openMenu();
+      }
+    } else {
+      lastDir = null;
+      if ((r2 && !pR2) || (l2 && !pL2)) { showList(); const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
     }
-    if (l2 && !prevL2 && listOn) { setView("start"); prevL2 = l2; prevR2 = r2; prevStart = startBtn; prevA2 = aBtn; return; }
-    prevStart = startBtn; prevA2 = aBtn;
-    if (r2 && !prevR2 && listOn) {
-      const ae = document.activeElement;
-      const card = (ae && ae.classList && ae.classList.contains("gcard")) ? ae : (document.querySelector(".gcard.cur") || document.querySelector(".gcard"));
-      if (card) { card.click(); frame.focus(); }
-    }
-    if (l2 && !prevL2 && !listOn) {
-      showList();
-      const c2 = document.querySelector(".gcard.cur") || document.querySelector(".gcard");
-      if (c2) c2.focus();
-    }
-    prevL2 = l2; prevR2 = r2;
+    pL2 = l2; pR2 = r2; pR1 = r1; pA = a; pB = b;
   }, 50);
+  addEventListener("keydown", (e) => {
+    if (!listwrap.classList.contains("on")) return;
+    const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
+    if (map[e.code]) { e.preventDefault(); appMove(map[e.code]); }
+    if (e.code === "Escape" && menuIsOpen()) closeMenu(true);
+  });
 }
 loadRegistry();
 </script>

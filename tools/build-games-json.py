@@ -74,6 +74,20 @@ def main():
         f.write("\n")
     for w in warnings:
         print("警告:", w, file=sys.stderr)
+    # オフライン保存用に、プレイヤー一式のファイル一覧を作る
+    files = ["games.json", "sw.js"]
+    for base in ("games", "assets"):
+        for dirpath, _dirnames, filenames in os.walk(os.path.join(ROOT, base)):
+            for fn in filenames:
+                if fn in ("game.md", "payload-url.txt"):
+                    continue
+                rel = os.path.relpath(os.path.join(dirpath, fn), ROOT)
+                files.append(rel.replace(os.sep, "/"))
+    files = sorted(set(files))
+    with open(os.path.join(ROOT, "sw-manifest.json"), "w", encoding="utf-8") as f:
+        json.dump({"files": files}, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+    print(f"sw-manifest.json を生成しました（{len(files)}ファイル）")
     print(f"games.json を生成しました（{len(games)}本）")
     for g in games:
         print(f"  {g['slug']}: {g['title']} / lib={g['lib']} / {g['chars']}文字")
