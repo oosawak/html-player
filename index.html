@@ -46,6 +46,8 @@
   .note { font-size:12px; color:#46503f; line-height:1.8; }
   .info { font-size:13px; color:var(--ink); min-height:20px; margin:6px 0; white-space:pre-wrap; }
   a { color:#2e7d32; }
+  :focus-visible { outline:3px solid var(--lcd2); outline-offset:2px; }
+  .gcard:focus-visible { outline:none; box-shadow:0 0 0 4px var(--lcd2), 0 3px 0 rgba(57,64,74,.4); }
   #mkopen { display:none; }
   #pad { display:none; justify-content:space-between; align-items:center; gap:10px; margin-top:12px; touch-action:none; user-select:none; -webkit-user-select:none; }
   #pad.on { display:flex; }
@@ -62,7 +64,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.46</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.47</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -100,7 +102,7 @@
       <button class="pbtn ab" data-code="Space">A</button>
     </div>
   </div>
-  <p class="note" id="gpnote">ゲームパッドが接続されています。画面コントローラーは隠しています（共通Libのゲームでは、物理の十字キーとボタンがそのまま使えます）。</p>
+  <p class="note" id="gpnote">ゲームパッドが接続されています。画面コントローラーは隠しています。ゲームの中では物理の十字キーとボタンがそのまま使え、プレイヤーの画面操作も十字キー（移動）・A（決定）・B（ゲームに戻る）でできます。</p>
   <div class="info" id="wdmsg"></div>
   <div class="row">
     <button id="reload">リロード</button>
@@ -177,7 +179,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=46" : url; // プレイヤー更新時にカセットも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=47" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -359,6 +361,83 @@ setInterval(() => {
   document.body.classList.toggle("has-gamepad", has);
 }, 1000);
 
+/* ---- gamepad UI navigation ---- */
+(function(){
+  var lastDir = null, dirStart = 0, lastStep = 0, prevA = false, prevB = false;
+  function padState(){
+    try {
+      var gs = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (var i = 0; i < gs.length; i++) { if (gs[i] && gs[i].connected) return gs[i]; }
+    } catch(e){}
+    return null;
+  }
+  function btn(g, i){ return !!(g.buttons[i] && g.buttons[i].pressed); }
+  function dirOf(g){
+    if (btn(g, 14)) return "left";
+    if (btn(g, 15)) return "right";
+    if (btn(g, 12)) return "up";
+    if (btn(g, 13)) return "down";
+    var x = g.axes[0] || 0, y = g.axes[1] || 0;
+    if (Math.abs(x) > Math.abs(y)) { if (x < -0.6) return "left"; if (x > 0.6) return "right"; }
+    else { if (y < -0.6) return "up"; if (y > 0.6) return "down"; }
+    return null;
+  }
+  function focusables(){
+    var els = document.querySelectorAll("#wrap button, #wrap select, #wrap input, #wrap textarea, #wrap a[href], .gcard");
+    var out = [];
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i];
+      if (e.disabled) continue;
+      if (e.offsetParent === null && e !== document.activeElement) continue;
+      out.push(e);
+    }
+    return out;
+  }
+  function center(e){ var r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  function move(dir){
+    var list = focusables();
+    if (!list.length) return;
+    var cur = document.activeElement;
+    if (!cur || list.indexOf(cur) < 0) { list[0].focus(); list[0].scrollIntoView({ block: "nearest" }); return; }
+    var c = center(cur), best = null, bestScore = 1e18;
+    list.forEach(function(e){
+      if (e === cur) return;
+      var p = center(e), dx = p.x - c.x, dy = p.y - c.y, ok = false, main = 0, cross = 0;
+      if (dir === "left") { ok = dx < -4; main = -dx; cross = Math.abs(dy); }
+      if (dir === "right") { ok = dx > 4; main = dx; cross = Math.abs(dy); }
+      if (dir === "up") { ok = dy < -4; main = -dy; cross = Math.abs(dx); }
+      if (dir === "down") { ok = dy > 4; main = dy; cross = Math.abs(dx); }
+      if (!ok) return;
+      var score = main + cross * 2.2;
+      if (score < bestScore) { bestScore = score; best = e; }
+    });
+    if (best) { best.focus(); best.scrollIntoView({ block: "nearest" }); }
+  }
+  setInterval(function(){
+    var g = padState();
+    if (!g) { lastDir = null; prevA = prevB = false; return; }
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === "IFRAME" || ae.tagName === "TEXTAREA" || (ae.tagName === "INPUT" && ae.type !== "checkbox"))) { lastDir = null; prevA = btn(g, 0); prevB = btn(g, 1); return; }
+    var now = Date.now();
+    var d = dirOf(g);
+    if (d) {
+      if (d !== lastDir) { move(d); lastDir = d; dirStart = now; lastStep = now; }
+      else if (now - dirStart > 380 && now - lastStep > 150) { move(d); lastStep = now; }
+    } else lastDir = null;
+    var a = btn(g, 0), b = btn(g, 1);
+    if (a && !prevA) {
+      var el = document.activeElement;
+      if (el && el !== document.body && el.click) {
+        var wasCard = el.classList && el.classList.contains("gcard");
+        el.click();
+        if (wasCard) { var f = document.getElementById("frame"); if (f) f.focus(); }
+      }
+    }
+    if (b && !prevB) { setView("game"); var f2 = document.getElementById("frame"); if (f2) f2.focus(); }
+    prevA = a; prevB = b;
+  }, 50);
+})();
+
 /* ---- runaway watchdog (hp.js heartbeat) ---- */
 const watchbtn = document.getElementById("watchbtn");
 function drawWatch(){ watchbtn.textContent = watchOn ? "暴走検知 オン" : "暴走検知 オフ"; }
@@ -443,7 +522,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=46")).json();
+    const data = await (await fetch("games.json?v=47")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
