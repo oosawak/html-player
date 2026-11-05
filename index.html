@@ -46,6 +46,9 @@
   #mkopen { display:none; }
   #pad { display:none; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; touch-action:none; user-select:none; -webkit-user-select:none; }
   #pad.on { display:flex; }
+  body.has-gamepad #pad { display:none !important; }
+  #gpnote { display:none; }
+  body.has-gamepad #gpnote { display:block; }
   .cluster { display:flex; gap:6px; align-items:center; }
   .pbtn { width:52px; height:52px; border-radius:50%; font-size:19px; padding:0; background:#3a2a1a; }
   .pbtn:active { background:#7c2128; }
@@ -56,7 +59,7 @@
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLプレイヤー</h1><span class="ver">v0.43</span>
+    <h1>HTMLプレイヤー</h1><span class="ver">v0.44</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -94,6 +97,7 @@
       <button class="pbtn ab" data-code="Space">A</button>
     </div>
   </div>
+  <p class="note" id="gpnote">ゲームパッドが接続されています。画面コントローラーは隠しています（共通Libのゲームでは、物理の十字キーとボタンがそのまま使えます）。</p>
   <div class="info" id="wdmsg"></div>
   <div class="row">
     <button id="reload">リロード</button>
@@ -169,7 +173,7 @@ function load(url){
   freshFrame(); frame.setAttribute("sandbox", STRICT);
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=43" : url; // プレイヤー更新時にカートリッジも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=44" : url; // プレイヤー更新時にカートリッジも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -240,7 +244,7 @@ function hpMethods(src){
   }
   return names;
 }
-fetch("assets/hp.js?v=6").then(function(r){ return r.text(); }).then(function(src){
+fetch("assets/hp.js?v=7").then(function(r){ return r.text(); }).then(function(src){
   var el = document.getElementById("hpapi");
   if(!el) return;
   var names = hpMethods(src);
@@ -345,6 +349,11 @@ document.getElementById("padbtn").onclick = () => {
   padEl.classList.toggle("on");
   try { localStorage.setItem("hppad", padEl.classList.contains("on") ? "1" : "0"); } catch(e){}
 };
+setInterval(() => {
+  let has = false;
+  try { const gs = navigator.getGamepads ? navigator.getGamepads() : []; for(const g of gs){ if(g){ has = true; break; } } } catch(e){}
+  document.body.classList.toggle("has-gamepad", has);
+}, 1000);
 
 /* ---- runaway watchdog (hp.js heartbeat) ---- */
 const watchbtn = document.getElementById("watchbtn");
@@ -430,7 +439,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=43")).json();
+    const data = await (await fetch("games.json?v=44")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;

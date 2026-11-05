@@ -20,14 +20,46 @@ addEventListener("message",function(e){
   if(d.down)kd(d.code);else ku(d.code);
 });
 setInterval(function(){try{parent.postMessage({t:"hp-alive"},"*")}catch(e){}},500);
+// 物理ゲームパッド（Androidゲーム機の十字キーなど）。標準配置:
+// 十字=ボタン12〜15、左スティック=軸0/1、A=ボタン0、B=ボタン1。
+// キーボードと同じ状態に重ねるので、ゲーム側は入力元を区別しなくてよい。
+var padKeys={},padPrev={};
+function padSet(code,down){
+  if(down){
+    if(!padPrev[code])pressed[code]=true;
+    padKeys[code]=true;
+  }else{
+    delete padKeys[code];
+  }
+  padPrev[code]=down;
+}
+function pollPad(){
+  var gps;
+  try{gps=navigator.getGamepads?navigator.getGamepads():[]}catch(e){return}
+  var gp=null;
+  for(var i=0;i<gps.length;i++){if(gps[i]){gp=gps[i];break}}
+  var m={ArrowLeft:false,ArrowRight:false,ArrowUp:false,ArrowDown:false,Space:false,KeyX:false};
+  if(gp){
+    var b=gp.buttons||[],ax=gp.axes||[];
+    function btn(i){return !!(b[i]&&b[i].pressed)}
+    m.ArrowLeft=btn(14)||ax[0]<-0.5;
+    m.ArrowRight=btn(15)||ax[0]>0.5;
+    m.ArrowUp=btn(12)||ax[1]<-0.5;
+    m.ArrowDown=btn(13)||ax[1]>0.5;
+    m.Space=btn(0);
+    m.KeyX=btn(1);
+  }
+  for(var code in m)padSet(code,m[code]);
+}
+setInterval(pollPad,16);
 var HP={
   keys:keys,
-  left:function(){return !!keys.ArrowLeft},
-  right:function(){return !!keys.ArrowRight},
-  up:function(){return !!keys.ArrowUp},
-  down:function(){return !!keys.ArrowDown},
-  a:function(){return !!keys.Space},
-  b:function(){return !!keys.KeyX},
+  left:function(){return !!(keys.ArrowLeft||padKeys.ArrowLeft)},
+  right:function(){return !!(keys.ArrowRight||padKeys.ArrowRight)},
+  up:function(){return !!(keys.ArrowUp||padKeys.ArrowUp)},
+  down:function(){return !!(keys.ArrowDown||padKeys.ArrowDown)},
+  a:function(){return !!(keys.Space||padKeys.Space)},
+  b:function(){return !!(keys.KeyX||padKeys.KeyX)},
   aHit:function(){return !!pressed.Space},
   bHit:function(){return !!pressed.KeyX},
   loop:function(fn){
