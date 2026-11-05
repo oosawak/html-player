@@ -92,18 +92,25 @@
   body.appmode #genrebar button.on { background:#0f2f22; border-color:#57b368; color:#c9ffd9; }
   body.appmode #genrebar .dlbtn { margin-top:auto; background:#12283a; border-color:#2f5d7d; color:#cfeeff; text-align:center; }
   #menubtn { display:none; }
+  #offlinebar { display:none; }
+  body.appmode #offlinebar.on { display:block; position:absolute; top:10px; left:50%; transform:translateX(-50%); background:#3a2a10; color:#ffd98a; border:2px solid #8a6d2f; padding:6px 14px; border-radius:10px; z-index:9; font-size:13px; white-space:nowrap; }
   body.appmode #menubtn { display:block; position:absolute; top:10px; left:10px; z-index:9; background:#141a26; color:#dbe6f5; border:2px solid #2b3648; }
   #startwrap { background:radial-gradient(120% 110% at 50% 0%, #151c28 0%, #0a0d13 62%); }
   .stitle { color:#e6f2ff; }
   .spush { color:#4fe3ff; }
   #appback { position:fixed; top:10px; left:10px; z-index:60; opacity:.92; display:none; background:#141a26; color:#dbe6f5; border:2px solid #2b3648; }
   body.appmode #appback.on { display:block; }
+  .gwrap { position:relative; }
+  .gwrap .gcard { width:100%; height:100%; }
+  .gdl { display:none; }
+  body.appmode .gdl { display:block; position:absolute; top:6px; right:6px; z-index:2; background:rgba(16,21,31,.85); color:#dbe6f5; border:2px solid #2b3648; border-radius:9px; font:inherit; font-size:13px; padding:3px 9px; cursor:pointer; }
+  body.appmode .gdl.done { color:#7be495; border-color:#2f5d3a; }
 </style>
 </head>
 <body>
 <div id="wrap">
   <header>
-    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.51</span>
+    <h1>HTMLカセットプレイヤー</h1><span class="ver">v0.52</span>
   </header>
   <div class="row">
     <select id="cart">
@@ -125,7 +132,7 @@
       <div class="info" id="srcinfo"></div>
       <textarea id="srcview" readonly placeholder="ここにカセットのソース（HTML）が表示されます"></textarea>
     </div>
-    <div id="listwrap"><button id="menubtn">R1/R2 ☰ ジャンル</button>
+    <div id="listwrap"><div id="offlinebar">ネットに繋がっていません。ダウンロードしておくと、オフラインでも遊べます。</div><button id="menubtn">R1/R2 ☰ ジャンル</button>
       <div id="listgrid"></div>
     </div>
     </div>
@@ -207,21 +214,22 @@ let watchOn = true;
 try { watchOn = localStorage.getItem("hpwatch") !== "0"; } catch(e){}
 
 const STRICT = "allow-scripts allow-pointer-lock";
+const SANDBOX = () => window.__APPMODE__ ? STRICT + " allow-same-origin" : STRICT;
 function showLoading(on){ document.getElementById("loading").classList.toggle("on", !!on); }
 function freshFrame(){
   const nf = document.createElement("iframe");
   nf.id = "frame"; nf.title = "cartridge stage";
-  nf.setAttribute("sandbox", STRICT);
+  nf.setAttribute("sandbox", SANDBOX());
   frame.parentNode.replaceChild(nf, frame);
   frame = nf;
 }
 function load(url){
   currentGame = url; currentSource = ""; hideSource(); wdArmed = false; document.getElementById("wdmsg").textContent = "";
   const retryArmed = justStopped; justStopped = false;
-  freshFrame(); frame.setAttribute("sandbox", STRICT);
+  freshFrame(); frame.setAttribute("sandbox", SANDBOX());
   showLoading(true);
   frame.addEventListener("load", () => showLoading(false), { once: true });
-  frame.src = url.startsWith("games/") ? url + "?v=51" : url; // プレイヤー更新時にカセットも確実に取り直す
+  frame.src = url.startsWith("games/") ? url + "?v=52" : url; // プレイヤー更新時にカセットも確実に取り直す
   if(retryArmed){
     const f = frame; let loaded = false;
     f.addEventListener("load", () => { loaded = true; }, { once: true });
@@ -231,7 +239,7 @@ function load(url){
 function loadPayload(b64){
   currentSource = ""; hideSource(); wdArmed = false; document.getElementById("wdmsg").textContent = "";
   freshFrame();
-  frame.setAttribute("sandbox", STRICT);
+  frame.setAttribute("sandbox", SANDBOX());
   const f = frame;
   showLoading(true);
   f.addEventListener("load", () => showLoading(false), { once: true });
@@ -546,9 +554,20 @@ function buildList(){
     gs.textContent = p ? ("埋め込みURL " + p.length.toLocaleString("ja-JP") + "文字") : "埋め込みURLなし";
     b.append(img, gt, gs);
     b.onclick = () => { selectCartridge(o.value); load(o.value); };
-    grid.appendChild(b);
+    const wrap = document.createElement("div");
+    wrap.className = "gwrap";
+    wrap.appendChild(b);
+    if (window.__APPMODE__) {
+      const dl = document.createElement("button");
+      dl.className = "gdl"; dl.textContent = "\u2b07"; dl.title = "このゲームをダウンロード";
+      dl.dataset.slug = o.value.replace(/^games\//, "").replace(/\/$/, "");
+      dl.onclick = () => { if (window.__hpDownloadGame) window.__hpDownloadGame(dl); };
+      wrap.appendChild(dl);
+    }
+    grid.appendChild(wrap);
   }
   markCurrent();
+  if (window.__hpMarkDownloaded) window.__hpMarkDownloaded();
 }
 function showList(){ buildList(); setView("list"); }
 async function showSource(){
@@ -574,7 +593,7 @@ document.getElementById("srccopy").onclick = async () => {
 
 async function loadRegistry(){
   try {
-    const data = await (await fetch("games.json?v=51")).json();
+    const data = await (await fetch("games.json?v=52")).json();
     for(const g of data.games){
       const o = document.createElement("option");
       o.value = g.path;
@@ -600,13 +619,6 @@ async function loadRegistry(){
       const mk = (label, val) => { const b = document.createElement("button"); b.textContent = label; if (!val) b.classList.add("on"); b.onclick = () => { genreFilter = val; bar.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); buildList(); if (window.__hpCloseMenu) window.__hpCloseMenu(false); const c = document.querySelector(".gcard"); if (c) c.focus(); }; return b; };
       bar.appendChild(mk("すべて", ""));
       genres.forEach(g => bar.appendChild(mk(g, g)));
-      const dl = document.createElement("button");
-      dl.className = "dlbtn";
-      let dlDone = false;
-      try { dlDone = localStorage.getItem("hpdl") === "1"; } catch(e){}
-      dl.textContent = dlDone ? "ダウンロード済み（オフライン可）" : "⬇ ダウンロード（オフライン用）";
-      dl.onclick = () => { if (window.__hpDownload) window.__hpDownload(dl); };
-      bar.appendChild(dl);
       listwrap.insertBefore(bar, document.getElementById("listgrid"));
     }
     showList();
@@ -638,29 +650,61 @@ if (window.__APPMODE__) {
     const b = genreBar(); if (b) b.classList.remove("open");
     if (toCard) { const c = document.querySelector(".gcard.cur") || document.querySelector(".gcard"); if (c) c.focus(); }
   }
+  const offlinebar = document.getElementById("offlinebar");
+  function updateOfflineBar(){
+    const any = Object.keys(dlSet()).length > 0;
+    if (offlinebar) offlinebar.classList.toggle("on", !navigator.onLine && !any);
+  }
+  addEventListener("online", updateOfflineBar);
+  addEventListener("offline", updateOfflineBar);
+  updateOfflineBar();
   window.__hpOpenMenu = openMenu;
   window.__hpCloseMenu = closeMenu;
   if (menubtn) menubtn.onclick = () => { menuIsOpen() ? closeMenu(false) : openMenu(); };
   if ("serviceWorker" in navigator) { try { const rp = navigator.serviceWorker.register("sw.js"); if (rp && rp.catch) rp.catch(() => {}); } catch(e){} }
-  window.__hpDownload = async (btn) => {
+  function dlSet(){
+    try { return JSON.parse(localStorage.getItem("hpdlgames") || "{}"); } catch(e){ return {}; }
+  }
+  function markDownloaded(){
+    const set = dlSet();
+    document.querySelectorAll(".gdl").forEach(b => {
+      const done = !!set[b.dataset.slug];
+      b.classList.toggle("done", done);
+      if (done) b.textContent = "\u2713";
+    });
+  }
+  window.__hpMarkDownloaded = markDownloaded;
+  window.__hpDownloadGame = async (btn) => {
+    const slug = btn.dataset.slug;
+    if (!slug || btn.disabled) return;
+    const set = dlSet();
+    if (set[slug]) return;
+    btn.disabled = true;
     try {
-      btn.disabled = true;
       const man = await (await fetch("sw-manifest.json")).json();
-      const cache = await caches.open("hp-v51");
-      const files = ["./", "index.html"].concat(man.files);
+      const shared = ["index.html", "games.json", "assets/hp.js",
+        "assets/fonts/GenInterfaceJP-Light.ttf", "assets/fonts/GenInterfaceJP-Regular.ttf", "assets/fonts/GenInterfaceJP-Bold.ttf",
+        "assets/thumbs/" + slug + ".jpg"];
+      const files = man.files.filter(f => f.startsWith("games/" + slug + "/") || shared.includes(f));
+      const cache = await caches.open("hp-v52");
       let done = 0;
       for (const f of files) {
-        try { const res = await fetch(f); if (res.ok) await cache.put(f, res); } catch(e){}
+        try { const r = await fetch(f); if (r.ok) await cache.put(f, r.clone()); } catch(e){}
         done++;
-        btn.textContent = "ダウンロード中 " + done + "/" + files.length;
+        btn.textContent = done + "/" + files.length;
       }
-      btn.textContent = "ダウンロード済み（オフライン可）";
-      try { localStorage.setItem("hpdl", "1"); } catch(e){}
+      set[slug] = 1;
+      try { localStorage.setItem("hpdlgames", JSON.stringify(set)); } catch(e){}
+      btn.textContent = "\u2713";
+      btn.classList.add("done");
+      updateOfflineBar();
     } catch(e) {
-      btn.textContent = "ダウンロードに失敗しました";
-      btn.disabled = false;
+      btn.textContent = "\u2b07";
     }
+    btn.disabled = false;
   };
+  markDownloaded();
+
   addEventListener("message", (e) => {
     const d = e.data;
     if (!d || d.t !== "hp-sys") return;
