@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src https://oosawak.github.io 'unsafe-inline'; connect-src 'none'; form-action 'none'">
+<title>MUSIC CASSETTE</title>
+<link rel="stylesheet" href="https://oosawak.github.io/html-player/assets/fonts.css">
+<style>
+html,body{margin:0;padding:0;background:#070a18;height:100%}
+canvas{display:block;width:100%;height:auto;touch-action:manipulation}
+</style>
+</head>
+<body>
+<canvas id="cv" width="480" height="270"></canvas>
+<script>
+"use strict";
+// Song data: 1 char = 1 step (16th note). "0-9a-z" = semitone offset from the
+// voice base note, "." = hold, "-" = rest. Drums: K kick, S snare, h hat.
+var SNG=[
+{t:"SKY ASCENT",bpm:144,
+ v:[[69,"square",.16,"0.3.7.c.a.7.5.7.8...c...f...c87.a...e...h...e.5.0.2.3.7.c.7.3.0."],
+    [57,"square",.05,"037c037c037c037c8cfc8cfc8cfc8cfcaehaaehaaehaaeha037c037c037c037c"],
+    [45,"triangle",.22,"0.0.c.0.0.0.c.0.8.8.k.8.8.8.k.8.a.a.m.a.a.a.m.a.0.0.c.0.7.7.c.0."]],
+ d:"K.h.S.h.K.h.S.hhK.h.S.h.K.h.S.hhK.h.S.h.K.h.S.hhK.h.S.h.K.h.SSSS"},
+{t:"CANON - PACHELBEL",bpm:96,
+ v:[[62,"square",.13,"g.......e.......c.......b.......9.......7.......9.......b.......c.......b.......9.......7.......5.......4.......5.......2......."],
+    [62,"square",.045,"0...7...4...7...7...e...b...e...9...g...c...g...4...b...7...b...5...c...9...c...0...7...4...7...5...c...9...c...7...e...b...e..."],
+    [38,"triangle",.22,"c.......7.......9.......4.......5.......c.......5.......7.......c.......7.......9.......4.......5.......c.......5.......7......."]],
+ d:""}
+];
+var CH="0123456789abcdefghijklmnopqrstuvwxyz";
+var cv=document.getElementById("cv"),g=cv.getContext("2d");
+var ac=null,master=null,noiseBuf=null,playing=false,song=0,step=0,nextT=0,timer=null,stepDur=0,curStep=-1;
+function initAudio(){
+  if(ac)return;
+  ac=new (window.AudioContext||window.webkitAudioContext)();
+  master=ac.createGain();master.gain.value=.9;
+  var comp=ac.createDynamicsCompressor();
+  master.connect(comp);comp.connect(ac.destination);
+  noiseBuf=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);
+  var d=noiseBuf.getChannelData(0);
+  for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+}
+function tone(midi,t,dur,type,vol){
+  var o=ac.createOscillator(),gn=ac.createGain();
+  o.type=type;o.frequency.value=440*Math.pow(2,(midi-69)/12);
+  gn.gain.setValueAtTime(0,t);
+  gn.gain.linearRampToValueAtTime(vol,t+.008);
+  gn.gain.setValueAtTime(vol,t+Math.max(.01,dur-.05));
+  gn.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(gn);gn.connect(master);
+  o.start(t);o.stop(t+dur+.05);
+}
+function noise(t,dur,vol,fType,freq){
+  var s=ac.createBufferSource();s.buffer=noiseBuf;
+  var f=ac.createBiquadFilter();f.type=fType;f.frequency.value=freq;
+  var gn=ac.createGain();
+  gn.gain.setValueAtTime(vol,t);
+  gn.gain.exponentialRampToValueAtTime(.001,t+dur);
+  s.connect(f);f.connect(gn);gn.connect(master);
+  s.start(t);s.stop(t+dur+.02);
+}
+function kick(t){
+  var o=ac.createOscillator(),gn=ac.createGain();
+  o.type="sine";
+  o.frequency.setValueAtTime(150,t);
+  o.frequency.exponentialRampToValueAtTime(46,t+.11);
+  gn.gain.setValueAtTime(.5,t);
+  gn.gain.exponentialRampToValueAtTime(.001,t+.13);
+  o.connect(gn);gn.connect(master);
+  o.start(t);o.stop(t+.15);
+}
+function playStep(st,t){
+  var sg=SNG[song];
+  for(var vi=0;vi<sg.v.length;vi++){
+    var v=sg.v[vi],s=v[3],ch=s.charAt(st%s.length);
+    if(ch==="."||ch==="-")continue;
+    var idx=CH.indexOf(ch);if(idx<0)continue;
+    var hold=1;
+    while(s.charAt((st+hold)%s.length)===".")hold++;
+    tone(v[0]+idx,t,hold*stepDur*.95,v[1],v[2]);
+  }
+  if(sg.d){
+    var dc=sg.d.charAt(st%sg.d.length);
+    if(dc==="K")kick(t);
+    else if(dc==="S")noise(t,.09,.22,"bandpass",1800);
+    else if(dc==="h")noise(t,.03,.1,"highpass",6500);
+  }
+}
+function tick(){
+  while(nextT<ac.currentTime+.12){
+    playStep(step,nextT);
+    curStep=step;
+    nextT+=stepDur;
+    step++;
+  }
+}
+function startStop(){
+  initAudio();
+  if(ac.state==="suspended")ac.resume();
+  if(playing){
+    playing=false;clearInterval(timer);
+  }else{
+    var sg=SNG[song];
+    stepDur=60/sg.bpm/4;step=0;curStep=-1;
+    nextT=ac.currentTime+.06;
+    timer=setInterval(tick,25);
+    playing=true;
+  }
+}
+function switchSong(dir){
+  var was=playing;
+  if(playing)startStop();
+  song=(song+dir+SNG.length)%SNG.length;
+  if(was)startStop();
+}
+cv.addEventListener("pointerdown",function(){startStop();});
+window.addEventListener("keydown",function(e){
+  if(e.code==="Space"){e.preventDefault();startStop();}
+  if(e.code==="ArrowRight")switchSong(1);
+  if(e.code==="ArrowLeft")switchSong(-1);
+});
+window.addEventListener("message",function(e){
+  if(e.data&&e.data.t==="hp-key"&&e.data.down){
+    if(e.data.code==="Space")startStop();
+    if(e.data.code==="ArrowRight")switchSong(1);
+    if(e.data.code==="ArrowLeft")switchSong(-1);
+  }
+});
+function draw(){
+  var W=480,H=270;
+  var gr=g.createLinearGradient(0,0,0,H);
+  gr.addColorStop(0,"#0d1330");gr.addColorStop(1,"#070a18");
+  g.fillStyle=gr;g.fillRect(0,0,W,H);
+  g.strokeStyle="#2b3a6e";g.lineWidth=2;g.strokeRect(6,6,W-12,H-12);
+  g.textAlign="center";
+  g.fillStyle="#7fd4ff";
+  g.font="24px 'HP Dot','HP Denki',sans-serif";
+  g.fillText("MUSIC CASSETTE",W/2,44);
+  g.fillStyle="#ffd76a";
+  g.font="20px 'HP Dot','HP Denki',sans-serif";
+  g.fillText(SNG[song].t,W/2,86);
+  g.fillStyle="#9fb4e8";
+  g.font="12px 'HP Sans',sans-serif";
+  g.fillText("SONG "+(song+1)+" / "+SNG.length+"   BPM "+SNG[song].bpm,W/2,108);
+  // step LEDs (current bar, 16 steps)
+  var sg=SNG[song],len=sg.v[0][3].length,barLen=16;
+  var inBar=playing?((curStep%len)%barLen):-1;
+  for(var i=0;i<barLen;i++){
+    var x=44+i*25.5,y=150;
+    g.beginPath();
+    g.arc(x,y,8,0,7);
+    g.fillStyle=(i===inBar)?"#ff9f43":(i%4===0?"#33507e":"#1d2c52");
+    g.fill();
+  }
+  // voice bars
+  for(var v=0;v<3;v++){
+    var s=sg.v[v][3],ch=playing?s.charAt(curStep%s.length):"-";
+    var on=ch!=="."&&ch!=="-"&&CH.indexOf(ch)>=0;
+    var h=on?26+CH.indexOf(ch)*1.6:6;
+    g.fillStyle=["#ff6b81","#ffd76a","#4dd0a6"][v];
+    g.fillRect(120+v*80,236-h,44,h);
+  }
+  g.fillStyle="#e8eefc";
+  g.font="16px 'HP Sans',sans-serif";
+  g.fillText(playing?"■ STOP":"▶ PLAY",W/2,256-34);
+  g.fillStyle="#5f6f9d";
+  g.font="11px 'HP Sans',sans-serif";
+  g.fillText("TAP / A : PLAY-STOP    ◀ ▶ : SONG",W/2,256-12);
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
